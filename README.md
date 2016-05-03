@@ -6,30 +6,41 @@ Quantitative trade back-test platform
 ## 数据模块：datafeed
 
 负责数据读取，清理，转换
-
+datafeed类，作为回测引擎
 Input：股票日度交易csv文件 或者 股指高频数据
-
-Output：每日行情数据文件，如20150101.csv
+__time
+func：
+get_time_list() 返回数据库中的所有时间点
+get_data() 返回一期观测值，并更新内部时间节点，以防使用未来数据
 
 ## 策略模块：strat
+strat函数
+负责策略逻辑，给出交易指令
+利用历史数据来计算相关的指标，并计算交易指令
+Input 历史数据，滞后阶数
 
-负责策略逻辑，给出交易指令 
-
-Input：交易品种的bars，Open-High-Low-Close-Volume (OHLCV)
 Output: 信号signals，取值为(id,1,0,-1)，分别表示buy,hold,sell
 
 ## 交易模块：broker
-
+broker函数
 负责接收并处理交易指令，包括模拟成交情况（如有），计算交易成本（非必须），计算交易冲击成本（非必须）
 
-Input：交易信号
+Input：来自strat的交易信号，前一交易日的持仓，前一日未完成交易
+1. 根据涨跌停处理交易信号
+2. 根据前一日未完成交易信号更新当前交易信号
+3. 根据前一日的持仓和交易信号计算当前持仓
+4. 计算成交金额
+5. 计算手续费
 Output:  交易相关数据的tracing（仓位，交易费用，资金流）
 
 ## 组合模块：portfolio
-
+port类
 负责动态计算
+Input 交易信号
 
-
+1. 更新当前仓位，现金量
+2. 更新每日盈亏
+3. 计算个股持仓时间
 
 ## 回测表现模块：analyzer
 

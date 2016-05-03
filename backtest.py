@@ -9,9 +9,6 @@
 from datafeed import *
 
 
-def func():
-	pass
-
 
 class BackTest(object):
 	'''
@@ -59,4 +56,4 @@ def main():
 	bt = BackTest('test')
 
 if __name__ == '__main__':
-	main()
+	pass
