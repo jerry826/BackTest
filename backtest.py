@@ -6,8 +6,9 @@
 @time: 2016/4/30 14:03
 """
 
-from datafeed import *
 from strat import *
+from broker import *
+from portfolio import *
 
 
 class BackTest(object):
@@ -52,11 +53,15 @@ class BackTest(object):
 		self.__datafeed.initialize()
 		self.__length = self.__datafeed.time_length()
 		self.__strat = strat('demo', 'allA', 5)
-		self.__broker = broker()
+		self.__broker = broker(self.__fee, 0.002)
+		self.__port = portfolio(self.begin_equity)
 
 		for i in range(0, self.__length):
 			date, temp = self.__datafeed.data_fetch()
 			signal = self.__strat.update(date, temp)
+			transaction_volumn, transaction_fee, cur_positison, end_position_value, delta_cash = self.__broker.order(
+				signal, portfolio.cur_position, temp, position=self.__position)
+			portfolio.update(cur_positison, end_position_value, transaction_fee, delta_cash, temp, date)
 
 
 

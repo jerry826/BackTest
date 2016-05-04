@@ -6,9 +6,6 @@
 @time: 2016/5/1 22:29
 """
 
-import pandas as pd
-import numpy as np
-
 
 class strat(object):
 	'''

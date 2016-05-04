@@ -6,11 +6,6 @@
 @time: 2016/4/30 14:37
 """
 
-import os
-from datetime import datetime
-
-import pandas as pd
-
 
 class datafeed(object):
 	'''
@@ -109,4 +104,12 @@ def main():
 
 
 if __name__ == '__main__':
-	main()
+	from datafeed import *
+	from strat import *
+
+	dd = datafeed(universe='allA')
+	dd.initialize()
+	st = strat('hl', 'allA', 5)
+	for i in range(1000):
+		date, temp = dd.data_fetch()
+		signal = st.update(date, temp)
