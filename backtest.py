@@ -7,7 +7,7 @@
 """
 
 from datafeed import *
-
+from strat import *
 
 
 class BackTest(object):
@@ -28,8 +28,7 @@ class BackTest(object):
 		self.position=position
 		self.extra_position=extra_position
 		self.__universe=universe
-		self.__datafeed = datafeed(universe, begin_time, end_time)
-		self.__datafeed.initialize()
+
 
 	@property
 	def begin_date(self):
@@ -49,7 +48,18 @@ class BackTest(object):
 		self.__end_date=date
 
 	def start(self):
-		pass
+		self.__datafeed = datafeed(self.__universe, self.__begin_time, self.__end_time)
+		self.__datafeed.initialize()
+		self.__length = self.__datafeed.time_length()
+		self.__strat = strat('demo', 'allA', 5)
+		self.__broker = broker()
+
+		for i in range(0, self.__length):
+			date, temp = self.__datafeed.data_fetch()
+			signal = self.__strat.update(date, temp)
+
+
+
 
 
 def main():
