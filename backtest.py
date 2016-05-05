@@ -9,7 +9,9 @@
 from strat import *
 from broker import *
 from portfolio import *
+from datafeed import *
 
+from tqdm import tqdm
 
 class BackTest(object):
 	'''
@@ -17,16 +19,16 @@ class BackTest(object):
 
 	'''
 
-	def __init__(self, model_name, begin_time="2010-02-01", end_time="2015-11-01", begin_equity=100000000, fee=0.003,
+	def __init__(self, model_name, begin_time="2011-02-01", end_time="2015-11-01", begin_equity=100000000, fee=0.003,
 	             position=0.7, extra_position=0.1, path=r"C:\Users\Administrator\Desktop\alpha_output\allA",
-	             universe='zz500'):
+	             universe='allA'):
 		self.__name=model_name
 		self.__begin_date=begin_time
 		self.__end_date=end_time
 		self.path=path
 		self.begin_equity=begin_equity
 		self.__fee=fee
-		self.position=position
+		self.__position = position
 		self.extra_position=extra_position
 		self.__universe=universe
 
@@ -49,26 +51,36 @@ class BackTest(object):
 		self.__end_date=date
 
 	def start(self):
-		self.__datafeed = datafeed(self.__universe, self.__begin_time, self.__end_time)
+		self.__datafeed = datafeed(self.__universe, self.__begin_date, self.__end_date)
 		self.__datafeed.initialize()
-		self.__length = self.__datafeed.time_length()
-		self.__strat = strat('demo', 'allA', 5)
+		self.__length = self.__datafeed.time_length
+		self.__strat = strat(self.__name, 'allA', 7, 2)
 		self.__broker = broker(self.__fee, 0.002)
 		self.__port = portfolio(self.begin_equity)
 
-		for i in range(0, self.__length):
+		for i in tqdm(range(0, self.__length)):
 			date, temp = self.__datafeed.data_fetch()
 			signal = self.__strat.update(date, temp)
 			transaction_volumn, transaction_fee, cur_positison, end_position_value, delta_cash = self.__broker.order(
-				signal, portfolio.cur_position, temp, position=self.__position)
-			portfolio.update(cur_positison, end_position_value, transaction_fee, delta_cash, temp, date)
-
+				signal, self.__port.cur_position, self.__port.cur_balance, temp)
+			self.__port.update_port(cur_positison, end_position_value, transaction_fee, delta_cash, temp, date)
+			print('------------------------')
+			print(date)
+			print('end value: ' + str(end_position_value))
+			print('fee: ' + str(transaction_fee))
+			print('deltacash: ' + str(delta_cash))
+		return self.__port
 
 
 
 
 def main():
 	bt = BackTest('test')
+	bt.start()
 
 if __name__ == '__main__':
-	main()
+	bt = BackTest('demo', begin_time="2014-02-01", end_time="2014-11-01")
+	p = bt.start()
+	summary = pd.DataFrame(p.hist_log).T
+	summary['balance'].plot()
+	summary['PnL'].plot()

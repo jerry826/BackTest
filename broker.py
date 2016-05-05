@@ -35,7 +35,10 @@ class broker():
 		# merge the trade signal unfinished in last trade day
 		for stock in self.__unfinished_order:
 			last_order = self.__unfinished_order[stock]
-			cur_order = signal[stock]
+			if stock not in signal.keys():
+				cur_order = 0
+			else:
+				cur_order = signal[stock]
 			# compare these two signals
 			# same signal
 			if last_order * cur_order == 1:
@@ -63,37 +66,33 @@ class broker():
 		self.__unfinished_order = dict()
 		# update the orders
 
+
 		stock_holing_list = list(hist_position.keys())
-		print('hist stock holding list:')
-		print(stock_holing_list)
-		print('signal')
-		print(signal.keys())
+
 
 		for stock in signal.keys():
-
-			if signal[stock] == 1 and (stock not in hist_position):
-				# positive signal and no position before
-				if status[stock] == 1:
-					order_list[stock] = signal[stock]
-					stock_holing_list.append(stock)
+			if stock in status.keys():
+				if signal[stock] == 1 and (stock not in hist_position):
+					# positive signal and no position before
+					if status[stock] == 1:
+						order_list[stock] = signal[stock]
+						stock_holing_list.append(stock)
+					else:
+						self.__unfinished_order[stock] = signal[stock]
+				elif signal[stock] == -1 and (stock in hist_position):
+					# negative signal and exits position before
+					if status[stock] == 1:
+						order_list[stock] = signal[stock]
+						stock_holing_list.remove(stock)
+					else:
+						self.__unfinished_order[stock] = signal[stock]
 				else:
-					self.__unfinished_order[stock] = signal[stock]
-			elif signal[stock] == -1 and (stock in hist_position):
-				# negative signal and exits position before
-				if status[stock] == 1:
-					order_list[stock] = signal[stock]
-					stock_holing_list.remove(stock)
-				else:
-					self.__unfinished_order[stock] = signal[stock]
+					pass
 			else:
-				pass
+				print(str(stock) + ' not in the market')
 
 		# calculate the new position
-		print('new stock holding list:')
-		print(stock_holing_list)
-		print('unfinished_order')
-		print(self.__unfinished_order)
-		print('-------')
+
 		if self.__weights == 'equal':
 			if len(stock_holing_list) > 0:
 				data = data.fillna(0)
@@ -108,9 +107,9 @@ class broker():
 			data.loc[:, 'hist_position_num'] = df1
 			data.loc[:, 'cur_position_value'] = df2
 			# calculate positive num(round to 100)
-			print(df1)
-			print('---------------')
-			print(df2)
+			# print(df1)
+			# print('---------------')
+			# print(df2)
 			data.loc[:, 'price'] = data.loc[:, 'adjfactor'] * (data.loc[:, 'open'] + data.loc[:, 'close']) / 2
 			data.loc[:, 'cur_position_num'] = (data.loc[:, 'cur_position_value'] / (100 * data.loc[:, 'price'])).apply(
 				round) * 100
@@ -123,7 +122,7 @@ class broker():
 			transaction_fee = transaction_volumn * self.__fee
 
 			cur_positison = data.loc[data.loc[:, 'cur_position_num'] > 0, 'cur_position_num']
-			end_position_value = data.loc[:, 'cur_position_num'] * data.loc[:, 'close'] * data.loc[:, 'adjfactor']
+			end_position_value = sum(data.loc[:, 'cur_position_num'] * data.loc[:, 'close'] * data.loc[:, 'adjfactor'])
 		else:
 			pass
 
@@ -142,26 +141,3 @@ def main():
 if __name__ == '__main__':
 	bk = broker()
 
-	transaction_volumn, transaction_fee, cur_positison, delta_cash = bk.order({'000023.SZ': 1, '000024.SZ': 1}, dict(),
-	                                                                          10000000, data)
-	print(transaction_volumn)
-	print(transaction_fee)
-	print(cur_positison)
-	print('cash ' + str(delta_cash))
-	print('d1 over -----------------------------------------')
-
-	transaction_volumn, transaction_fee, cur_positison, delta_cash = bk.order({'000023.SZ': 1, '000024.SZ': 1},
-	                                                                          cur_positison, 10000000, data)
-
-	print(transaction_volumn)
-	print(transaction_fee)
-	print('cash ' + str(delta_cash))
-	print('d2 over  -----------------------------------------')
-	transaction_volumn, transaction_fee, cur_positison, delta_cash = bk.order({'000023.SZ': 1, '000024.SZ': 1},
-	                                                                          cur_positison, 10000000, data)
-	print(transaction_volumn)
-	print(transaction_fee)
-	print(cur_positison)
-	print('cash ' + str(delta_cash))
-
-	print('d3 over  -----------------------------------------')

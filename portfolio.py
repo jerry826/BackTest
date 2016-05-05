@@ -13,20 +13,22 @@ class portfolio():
 		self.__cur_cash = begin_equity
 		self.__cur_balance = begin_equity
 		self.__hist_log = dict()
+		self.__hist_pos_log = dict()
 		self.__cur_PnL = 0
 
-	def update(self, cur_positison, end_position_value, transaction_fee, delta_cash, temp, date, ):
-		self.__hist_log[date] = {'position': self.__cur_position, 'cash': self.__cur_cash,
-		                         'balance': self.__cur_balance, 'PnL': self.__PnL}
+	def update_port(self, cur_positison, end_position_value, transaction_fee, delta_cash, temp, date):
+		self.__hist_log[date] = {'cash': self.__cur_cash, 'transaction fee': transaction_fee,
+		                         'balance': self.__cur_balance, 'PnL': self.__cur_PnL}
+		self.__hist_pos_log[date] = {'position': self.__cur_position}
 		# update current position
 		self.__cur_position = cur_positison
 		# update current cash
 		self.__cur_cash = self.__cur_cash + delta_cash - transaction_fee
 		# update current balance
-		last_balance = self.__balance
-		self.__balance = end_position_value + self.__cur_cash
+		last_balance = self.__cur_balance
+		self.__cur_balance = end_position_value + self.__cur_cash
 		# update PnL
-		self.__cur_PnL = self.__balance - last_balance
+		self.__cur_PnL = self.__cur_balance - last_balance
 
 	@property
 	def cur_position(self):
@@ -43,6 +45,16 @@ class portfolio():
 	@property
 	def cur_PnL(self):
 		return self.__cur_PnL
+
+	@property
+	def hist_log(self):
+		return self.__hist_log
+
+	@property
+	def hist_pos_log(self):
+		return self.__hist_pos_log
+
+
 
 
 if __name__ == '__main__':

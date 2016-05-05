@@ -6,6 +6,9 @@
 @time: 2016/4/30 14:37
 """
 
+from datetime import *
+import os
+import pandas as pd
 
 class datafeed(object):
 	'''
@@ -14,7 +17,11 @@ class datafeed(object):
 
 	def __init__(self, universe='allA', begin_date='2014-01-01', end_date='2015-01-01', path='E:\\data'):
 		'''
-
+		:param universe: 'allA', 'zz500', stock id list
+		:param begin_date:
+		:param end_date:
+		:param path:
+		:return:
 		'''
 		self.__universe = universe
 		self.__begin_date = begin_date
@@ -44,6 +51,12 @@ class datafeed(object):
 		if self.__universe == 'allA':
 			self.__path = self.__path + '\\mktQuotation_bar'  # set the path
 			self.__date_list = sorted([int(x[-12:-4]) for x in os.listdir(self.__path)[:-1]])  # get the date list
+
+			self.__date_list = [x for x in self.__date_list if
+			                    x >= int(''.join(self.__begin_date.split('-'))) and x <= int(
+				                    ''.join(self.__end_date.split('-')))]
+
+
 			self.__length = len(self.__date_list)  # get the length of date list
 			self.__day1 = str(self.__date_list[0])
 			self.__day2 = str(self.__date_list[-1])
@@ -104,7 +117,6 @@ def main():
 
 
 if __name__ == '__main__':
-	from datafeed import *
 	from strat import *
 
 	dd = datafeed(universe='allA')
