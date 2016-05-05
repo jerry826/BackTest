@@ -20,16 +20,21 @@ class analyzer():
 		self.__data.loc[:, 'draw_down'] = -(
 		(self.__data.loc[:, 'cum_ret'] + 1).cummax() - (1 + self.__data.loc[:, 'cum_ret'])) / (
 		                                  1 + self.__data.loc[:, 'cum_ret'].cummax())
+		self.__data.loc[:, 'turnover'] = self.__data.loc[:, 'trade volumn'] / self.__data.loc[:, 'balance']
+
+
 		# calculate the peerformance index
 		sharpe_ratio = np.sqrt(250) * (self.__data.loc[:, 'ret']).mean() / (self.__data.loc[:, 'ret']).std()
 		year_ret = self.__data.loc[:, 'ret'].mean() * 250
 		max_draw_down = (self.__data.loc[:, 'draw_down']).min()
 		year_volatility = np.sqrt(250) * self.__data.loc[:, 'ret'].std()
+		average_turnover = self.__data.loc[:, 'turnover'].mean()
 		# output the index
 		print('Sharpe ratio %0.3f' % sharpe_ratio)
 		print('Average year return %0.3f' % year_ret)
 		print('Maximum draw down %0.3f' % max_draw_down)
 		print('Annualized return volatility %0.3f' % year_volatility)
+		print('Average turn over %0.3f' % average_turnover)
 		return self.__data
 
 	def plot(self):

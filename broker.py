@@ -113,18 +113,18 @@ class broker():
 				round) * 100
 			# calculate the trade volumn
 			data = data.fillna(0)
-			transaction_volumn = np.sum(
+			transaction_volume = np.sum(
 				np.abs((data.loc[:, 'hist_position_num'] - data.loc[:, 'cur_position_num']) * data.loc[:, 'price']))
 			delta_cash = np.sum(
 				(data.loc[:, 'hist_position_num'] - data.loc[:, 'cur_position_num']) * data.loc[:, 'price'])
-			transaction_fee = transaction_volumn * self.__fee
+			transaction_fee = transaction_volume * self.__fee
 
 			cur_positison = data.loc[data.loc[:, 'cur_position_num'] > 0, 'cur_position_num']
 			end_equity_balance = sum(data.loc[:, 'cur_position_num'] * data.loc[:, 'close'] * data.loc[:, 'adjfactor'])
 		else:
-			pass
+			raise ValueError('Bad choice')
 
-		return transaction_volumn, transaction_fee, cur_positison, end_equity_balance, delta_cash
+		return transaction_volume, transaction_fee, cur_positison, end_equity_balance, delta_cash
 
 
 def main():

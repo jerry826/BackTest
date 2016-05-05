@@ -5,21 +5,24 @@
 @file: portfolio.py
 @time: 2016/5/4 22:04
 """
-
+import pandas as pd
 
 class portfolio():
 	def __init__(self, begin_equity=10000000):
-		self.__cur_position = dict()
+		self.__cur_position = pd.Series()
 		self.__cur_cash = begin_equity
 		self.__cur_balance = begin_equity
 		self.__hist_log = dict()
 		self.__hist_pos_log = dict()
 		self.__cur_PnL = 0
 
-	def update_port(self, cur_positison, end_position_value, transaction_fee, delta_cash, temp, date):
+	def update_port(self, cur_positison, end_position_value, transaction_volume, transaction_fee, delta_cash, temp,
+	                date):
 		self.__hist_log[date] = {'cash': self.__cur_cash, 'transaction fee': transaction_fee,
-		                         'balance': self.__cur_balance, 'PnL': self.__cur_PnL}
-		self.__hist_pos_log[date] = {'position': self.__cur_position}
+		                         'balance': self.__cur_balance, 'PnL': self.__cur_PnL,
+		                         'trade volumn': transaction_volume}
+		print(type(self.__cur_position))
+		self.__hist_pos_log[date] = {'position': self.__cur_position.to_dict()}
 		# update current position
 		self.__cur_position = cur_positison
 		# update current cash

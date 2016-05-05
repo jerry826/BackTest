@@ -63,7 +63,8 @@ class BackTest(object):
 			signal = self.__strat.update(date, temp)
 			transaction_volumn, transaction_fee, cur_positison, end_equity_balance, delta_cash = self.__broker.order(
 				signal, self.__port.cur_position, self.__port.cur_balance, temp)
-			self.__port.update_port(cur_positison, end_equity_balance, transaction_fee, delta_cash, temp, date)
+			self.__port.update_port(cur_positison, end_equity_balance, transaction_volumn, transaction_fee, delta_cash,
+			                        temp, date)
 			print('------------------------')
 			print(date)
 			print('end value: ' + str(end_equity_balance))
@@ -82,5 +83,8 @@ def main():
 	bt.start()
 
 if __name__ == '__main__':
-	bt = BackTest('demo', begin_time="2012-02-01", end_time="2013-11-01")
+	bt = BackTest('mm', begin_time="2012-02-01", end_time="2013-11-01")
 	bt.start()
+
+	m = bt._BackTest__port.hist_pos_log
+	mm = pd.DataFrame.from_dict(m)

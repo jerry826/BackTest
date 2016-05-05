@@ -49,7 +49,7 @@ class strat(object):
 
 	def __gen_signal(self, data):
 		signal = dict()
-		# demo
+		# demo1
 		if self.__name == 'demo':
 			for stock in self.__stock_list:
 				signal[stock] = 1
@@ -61,6 +61,12 @@ class strat(object):
 			for i, stock in enumerate(close.index):
 				if signal_temp[i] != 0:
 					signal[stock] = signal_temp[i]
+
+		elif self.__name == 'mm':
+			close = data.groupby('sec_code')['close'].mean()
+			signal = pd.Series(np.where(close.rank(pct=True) > 0.95, 1, -1), index=close.index)
+			signal = signal.to_dict()
+
 		return signal
 
 
