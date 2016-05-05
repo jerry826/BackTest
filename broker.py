@@ -107,9 +107,7 @@ class broker():
 			data.loc[:, 'hist_position_num'] = df1
 			data.loc[:, 'cur_position_value'] = df2
 			# calculate positive num(round to 100)
-			# print(df1)
-			# print('---------------')
-			# print(df2)
+
 			data.loc[:, 'price'] = data.loc[:, 'adjfactor'] * (data.loc[:, 'open'] + data.loc[:, 'close']) / 2
 			data.loc[:, 'cur_position_num'] = (data.loc[:, 'cur_position_value'] / (100 * data.loc[:, 'price'])).apply(
 				round) * 100
@@ -122,11 +120,11 @@ class broker():
 			transaction_fee = transaction_volumn * self.__fee
 
 			cur_positison = data.loc[data.loc[:, 'cur_position_num'] > 0, 'cur_position_num']
-			end_position_value = sum(data.loc[:, 'cur_position_num'] * data.loc[:, 'close'] * data.loc[:, 'adjfactor'])
+			end_equity_balance = sum(data.loc[:, 'cur_position_num'] * data.loc[:, 'close'] * data.loc[:, 'adjfactor'])
 		else:
 			pass
 
-		return transaction_volumn, transaction_fee, cur_positison, end_position_value, delta_cash
+		return transaction_volumn, transaction_fee, cur_positison, end_equity_balance, delta_cash
 
 
 def main():

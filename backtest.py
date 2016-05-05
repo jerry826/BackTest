@@ -10,7 +10,7 @@ from strat import *
 from broker import *
 from portfolio import *
 from datafeed import *
-
+from analyzer import *
 from tqdm import tqdm
 
 class BackTest(object):
@@ -61,15 +61,18 @@ class BackTest(object):
 		for i in tqdm(range(0, self.__length)):
 			date, temp = self.__datafeed.data_fetch()
 			signal = self.__strat.update(date, temp)
-			transaction_volumn, transaction_fee, cur_positison, end_position_value, delta_cash = self.__broker.order(
+			transaction_volumn, transaction_fee, cur_positison, end_equity_balance, delta_cash = self.__broker.order(
 				signal, self.__port.cur_position, self.__port.cur_balance, temp)
-			self.__port.update_port(cur_positison, end_position_value, transaction_fee, delta_cash, temp, date)
+			self.__port.update_port(cur_positison, end_equity_balance, transaction_fee, delta_cash, temp, date)
 			print('------------------------')
 			print(date)
-			print('end value: ' + str(end_position_value))
+			print('end value: ' + str(end_equity_balance))
 			print('fee: ' + str(transaction_fee))
-			print('deltacash: ' + str(delta_cash))
-		return self.__port
+			print('delta cash: ' + str(delta_cash))
+
+		self.__analyzer = analyzer(self.__port.hist_log)
+		self.__analyzer.cal()
+		self.__analyzer.plot()
 
 
 
@@ -79,8 +82,5 @@ def main():
 	bt.start()
 
 if __name__ == '__main__':
-	bt = BackTest('demo', begin_time="2014-02-01", end_time="2014-11-01")
-	p = bt.start()
-	summary = pd.DataFrame(p.hist_log).T
-	summary['balance'].plot()
-	summary['PnL'].plot()
+	bt = BackTest('demo', begin_time="2012-02-01", end_time="2013-11-01")
+	bt.start()
