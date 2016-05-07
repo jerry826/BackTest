@@ -6,6 +6,7 @@
 @time: 2016/5/4 21:53
 """
 
+import math
 import numpy as np
 import pandas as pd
 
@@ -14,16 +15,159 @@ class broker(object):
 	'''
 
 	'''
-
-	def __init__(self, fee=0.002, cost=0.002, weights='equal', position=0.7):
-
+	def __init__(self,fee=0.002,price_type='vwap',short=False):
+		'''
+		Initializing the broker class
+		:param fee:
+		:param cost:
+		:param weights:
+		:param position:
+		:return:
+		'''
 		self.__unfinished_order = dict()
 		self.__fee = fee
-		self.__cost = cost
-		self.__weights = weights
-		self.__position = position
+		self.__cash_balance = 10000
+		self.__position_value = 10000
+		self.__position = dict()
+		self.__trading_data = pd.DataFrame()
+		self.__price = price_type
+		self.__hist_log = dict()
+		self.__short = short
 
-	def order(self, signal, hist_position, hist_balance, data):
+
+	def update_info(self,date,trading_data):
+		'''
+		Get the new trading data and update the information
+		:param date: trading date
+		:param trading_data: trading data
+		:return: none
+		'''
+		self.__trading_data = trading_data.reset_index().set_index('sec_code')
+		self.__trading_data.loc[:,'adj_close'] = self.__trading_data.loc[:,'close']*self.__trading_data.loc[:,'adjfactor']
+		self.__trading_data.loc[:,'adj_trade'] = (self.__trading_data.loc[:,self.__price]*self.__trading_data.loc[:,'adjfactor'])
+		self.__trade_info = (self.__trading_data.loc[:,['adj_close','adj_trade','trade_status','maxupordown']]).to_dict(orient='index')
+		self.__date = date
+		self.__hist_log[self.__date] = dict()
+
+	def trade_status(self,symbol):
+		'''
+		Calculate whether a stock can be traded in this day
+		:param symbol: stock symbol
+		:return: True if the stock is available for trading
+		'''
+		return (self.__trade_info[symbol]['trade_status'] == '交易' and self.__trade_info[symbol]['maxupordown'] == 0)
+
+	def take_order_list(self,order_list):
+		'''
+		Take a dict of order list and deal the orders together
+		:param order_list: a trading order list
+		:return: none
+		'''
+		for symbol, trade_order in order_list.items():
+			if trade_order['order_type'] == '1':
+				self.order(symbol,trade_order['amount'])
+			elif trade_order['order_type'] == '2':
+				self.order_to(symbol,trade_order['amount'])
+			elif trade_order['order_type'] == '3':
+				self.order_pct(symbol,trade_order['amount'])
+			elif trade_order['order_type'] == '4':
+				self.order_pct_to(symbol,trade_order['amount'])
+			else:
+				print('Invalid order type.')
+
+	def order(self, symbol, amount):
+		'''
+
+		:param symbol: stock symbol
+		:param amount: order size
+		:return:
+		'''
+		self.__register(symbol)
+		if self.trade_status(symbol):
+			self.__order(symbol, amount)
+
+	def order_to(self,symbol,amount):
+		'''
+
+		:param symbol: stock symbol
+		:param amount: target position
+		:return: none
+		'''
+		self.__register(symbol)
+		if self.trade_status(symbol):
+			self.__order(symbol, amount-self.__position[symbol])
+
+	def order_pct(self,symbol,pct):
+		'''
+
+		:param symbol: stock symbol
+		:param pct: order size (pct of value)
+		:return: none
+		'''
+		trade_price = self.__trade_info[symbol]['adj_close']
+		self.__register(symbol)
+		if self.trade_status(symbol):
+			amount = math.floor(self.__position_value*pct/(trade_price*100))*100
+			self.__order(symbol,amount)
+
+
+	def order_pct_to(self,symbol,pct):
+		'''
+
+		:param symbol: stock symbol
+		:param pct: target pct of value
+		:return: none
+		'''
+		trade_price = self.__trade_info[symbol]['adj_close']
+		self.__register(symbol)
+		if self.trade_status(symbol):
+			amount = math.floor(self.__position_value*pct/(trade_price*100))*100
+			self.__order(symbol,amount-self.__position[symbol])
+
+	def __order(self,symbol,amount):
+		'''
+		Place the order
+		:param symbol: stock symbol
+		:param amount: order amount
+		:return: none
+		'''
+		trade_price = self.__trade_info[symbol]['adj_close']
+		amount_up_limit = math.floor(self.__cash_balance/(100*trade_price*(1+self.__fee)))*100
+		print(self.__cash_balance/(100*trade_price*(1+self.__fee)))
+		print(amount_up_limit)
+		if self.__short == False:
+			amount_down_limit = -self.__position[symbol]
+		else:
+			amount_down_limit =-float('inf')
+		amount = min(max(amount_down_limit,amount),amount_up_limit)
+		# update cash balance
+		self.__cash_balance = self.__cash_balance - trade_price*amount-abs(amount)*trade_price*self.__fee # update cash balance
+		# update stock position
+		self.__position[symbol] = self.__position[symbol]+amount
+		# add transaction log
+		self.__hist_log[self.__date][symbol] = {'price':trade_price,'amount':amount}
+		print('Amount: '+ str(amount))
+		print('Cash: '+ str(self.__cash_balance))
+		print('Position: '+ str(self.__position[symbol]))
+		print('Cost: ' + str(abs(amount)*trade_price*self.__fee))
+		print('-----------------------------------')
+
+
+	def __register(self,symbol):
+		'''
+		Register the stock symbol in the position log if the stock has not been traded before
+		:param symbol: stock symbol
+		:return:
+		'''
+		# add the stock into the stock log list
+		if symbol not in self.__position.keys():
+			self.__position[symbol] = 0
+
+	def get_hist_log(self):
+		return self.__hist_log
+
+
+	def orderX(self, signal, hist_position, hist_balance, data):
 		'''
 		:param signal: trading signal comes from strat
 		:param hist_position: the position information in last trade day
@@ -65,10 +209,7 @@ class broker(object):
 		# clear the unfinished orders
 		self.__unfinished_order = dict()
 		# update the orders
-
-
 		stock_holing_list = list(hist_position.keys())
-
 
 		for stock in signal.keys():
 			if stock in status.keys():
@@ -129,13 +270,27 @@ class broker(object):
 
 def main():
 	bk = broker()
-	transaction_volumn, transaction_fee, cur_positison = bk.order({'000001.SZ': 1, '000002.SZ': 1}, dict(), 10000000,
-	                                                              data)
-	print(transaction_volumn)
-	print(transaction_fee)
-	print(cur_positison)
+
 
 
 if __name__ == '__main__':
+	from datafeed import datafeed
 	bk = broker()
+	dd = datafeed(universe='allA')
+	dd.initialize()
+	for i in range(3):
+		date, temp = dd.data_fetch()
+		print(bk.update_info(date, temp))
+		bk.order_to('000789.SZ',200)
+		bk.order_to('000789.SZ',0)
+		bk.order('000789.SZ',0)
+		bk.order_pct_to('000789.SZ',1)
+		bk.order_pct_to('000789.SZ',0)
+		bk.order_pct_to('000789.SZ',0.5)
+		bk.order_pct('000789.SZ',0.5)
+		bk.order_to('601939.SH',0)
+		bk.order_pct_to('000789.SZ',-1000)
+
+	print(bk.get_hist_log())
+
 
