@@ -7,7 +7,7 @@
 """
 import pandas as pd
 
-class portfolio():
+class portfolio(object):
 	def __init__(self, begin_equity=10000000):
 		self.__cur_position = pd.Series()
 		self.__cur_cash = begin_equity

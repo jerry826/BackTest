@@ -10,7 +10,7 @@ import pandas as pd
 import numpy as np
 
 
-class analyzer():
+class analyzer(object):
 	def __init__(self, hist_log):
 		self.__data = pd.DataFrame(hist_log).T
 
