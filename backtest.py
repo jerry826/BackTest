@@ -11,14 +11,12 @@ from broker import *
 from portfolio import *
 from datafeed import *
 from analyzer import *
-from tqdm import tqdm
+# from tqdm import tqdm
 
 class BackTest(object):
 	'''
 	Back-test platform
-
 	'''
-
 	def __init__(self, model_name, begin_time="2011-02-01", end_time="2015-11-01", begin_equity=100000000, fee=0.003,
 	             position=0.7, extra_position=0.1, path=r"C:\Users\Administrator\Desktop\alpha_output\allA",
 	             universe='allA'):

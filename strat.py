@@ -24,6 +24,7 @@ class strat(object):
 		self.__date_list = []
 		self.__stock_list = []
 
+
 	def update(self, date, df):
 		self.__date_list.append(date)  # add new date
 		self.__hist_data = pd.concat([self.__hist_data, df])  # add new data

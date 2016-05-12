@@ -5,18 +5,46 @@
 @file: portfolio.py
 @time: 2016/5/4 22:04
 """
+from collections import defaultdict
+
 import pandas as pd
 
-class portfolio(object):
-	def __init__(self, begin_equity=10000000):
-		self.__cur_position = pd.Series()
-		self.__cur_cash = begin_equity
-		self.__cur_balance = begin_equity
-		self.__hist_log = dict()
-		self.__hist_pos_log = dict()
-		self.__cur_PnL = 0
+class Positions(object):
+	def __init__(self):
+		pass
 
-	def update_port(self, cur_positison, end_position_value, transaction_volume, transaction_fee, delta_cash, temp,
+
+class Position(object):
+	def __init__(self, symbol):
+		self.symbol = symbol
+		self.amount = 0.0
+		self.last_price = 0.0
+
+
+class portfolio(object):
+	def __init__(self, begin_equity=10000000,commission=0.002):
+		self.portfolio_value = begin_equity
+		self.__cash = begin_equity
+		self.__positions = defaultdict(int)
+		self.commission = commission
+		self.PnL = 0
+		self.position_log = {}
+		self.start_date = None
+
+	@property
+	def cash(self):
+		return self.__cash
+	@property
+	def positions(self):
+		return self.__positions
+
+	def update(self,order):
+		if order.validation:
+			self.__positions[order.symbol] += order.valid_volume
+			self.__cash -=  order.valid_volume*order.valid_price*(1+self.commission)*100
+
+
+	def update_port(self,positison,transaction_volume,transaction_cost, delta_cash, temp,
 	                date):
 		self.__hist_log[date] = {'cash': self.__cur_cash, 'transaction fee': transaction_fee,
 		                         'balance': self.__cur_balance, 'PnL': self.__cur_PnL,
