@@ -317,7 +317,7 @@ def test():
 	dd = datafeed(universe='allA')
 	dd.initialize()
 
-	for i in range(7):
+	for i in range(10):
 		date, temp = dd.data_fetch()
 		bk.update_info(date, temp)
 		x = random.random()

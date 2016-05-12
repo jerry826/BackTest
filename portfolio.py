@@ -18,7 +18,13 @@ class Position(object):
 	def __init__(self, symbol):
 		self.symbol = symbol
 		self.amount = 0.0
-		self.last_price = 0.0
+		self.last_close = 0.0
+		self.cur_close = 0.0
+
+	def update(self):
+		pass
+
+
 
 
 class portfolio(object):
@@ -42,6 +48,9 @@ class portfolio(object):
 		if order.validation:
 			self.__positions[order.symbol] += order.valid_volume
 			self.__cash -=  order.valid_volume*order.valid_price*(1+self.commission)*100
+
+
+
 
 
 	def update_port(self,positison,transaction_volume,transaction_cost, delta_cash, temp,
