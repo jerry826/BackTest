@@ -16,32 +16,39 @@ from portfolio import portfolio
 
 class broker(object):
 	'''
-
+	Broker class
 	'''
 	def __init__(self,commission=0.002,price_type='vwap',short=False):
 		'''
-
-		:param commission: commission fee
-		:param price_type: vwap or close or open
-		:param short: True or False
+		Initializing the broker class
+		:param commission: commission fee, default 0.002
+		:param price_type: vwap or close price or open price or other choices(close*0.5+open*0.5)
+		:param short: True or False, True if shorting is allowed
 		'''
+		# set default parameters
 		self.commission = commission
 		self.price = price_type
 		self.short = short
-
-
+		#
 		self.port = portfolio(begin_equity=1000000,commission=commission)
 		self.order_list = []
 		self.order_count = 0
-		self.execute_index = False
 
+		self.execute_trigger = False
+		self.update_trigger = False
+
+		# daily recorder
 		self.trade_volume = 0.0
 		self.trade_cost = 0.0
 		self.trade_log = defaultdict()
 
 
 	def execute(self):
-		if not self.execute_index:
+		'''
+		Execute the orders separately
+		:return: none
+		'''
+		if not self.execute_trigger:
 			# execute the orders
 			for order in self.order_list:
 				info = Trade_info(cash=self.port.cash,
@@ -63,12 +70,16 @@ class broker(object):
 			# record the trade results
 			self.trade_log[self.date] = {'trade_volume':self.trade_volume, 'trade_cost': self.trade_cost, 'order num':self.order_count}
 			self.execute_index = True
+			self.update_trigger = False
 			self.trade_summary()
 
 		else:
-			print('You cannot execute the orders twice in a single trade day ')
+			print('You cannot execute the orders twice in a single trade day or without update the data')
 
 	def trade_summary(self):
+		'''
+		Print the trading result in a single day
+		'''
 		print('========================================================')
 		print('Date: ' +str(self.date))
 		print('Trade volume %0.1f'%self.trade_volume)
@@ -100,6 +111,9 @@ class broker(object):
 		self.order_count = 0.0
 		self.execute_index = False
 		self.order_list = []
+
+		self.update_trigger = True # Finish data update
+		self.execute_trigger = False
 
 	def order(self, symbol, amount):
 		'''

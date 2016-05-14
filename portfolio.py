@@ -15,20 +15,58 @@ class Positions(object):
 
 
 class Position(object):
+	'''
+	Position class for a single stock.
+
+	'''
 	def __init__(self, symbol):
-		self.symbol = symbol
+		self.__symbol = symbol
 		self.amount = 0.0
 		self.last_close = 0.0
 		self.cur_close = 0.0
+		self.position_log = defaultdict(int)
+		self.close_log = defaultdict(int)
 
-	def update(self):
-		pass
+	@property
+	def symbol(self):
+		return self.__symbol
 
+	@property
+	def position_value(self):
+		return self.cur_close*self.amount
 
+	def update_position(self,order,date):
+		'''
+		Update the position amount from the order
+		:param order:
+		:param date:
+		:return: none
+		'''
+		if order.validation:
+			self.amount = self.amount+order.valid_volume
+			self.position_log[date] = {'position':self.amount}
+		else:
+			print('The order has not been updated')
+
+	def update_value(self,price,date):
+		'''
+		Update the position close price and record the price
+		:param price: current close price
+		:param date:  current date
+		:return: none
+		'''
+		self.last_close = self.cur_close
+		self.cur_close = price
+		self.close_log[date] = {'close price':self.cur_close}
 
 
 class portfolio(object):
 	def __init__(self, begin_equity=10000000,commission=0.002):
+		'''
+
+		:param begin_equity: the initial equity value
+		:param commission: commission fee
+		'''
 		self.portfolio_value = begin_equity
 		self.__cash = begin_equity
 		self.__positions = defaultdict(int)
@@ -46,29 +84,26 @@ class portfolio(object):
 
 	def update(self,order):
 		if order.validation:
+			# update
 			self.__positions[order.symbol] += order.valid_volume
 			self.__cash -=  order.valid_volume*order.valid_price*(1+self.commission)*100
 
 
+	def update_port(self,data):
+		'''
+
+		:param data: daily trading data
+		:return:
+		'''
+		# set the portfolio value to zero
+		self.portfolio_value = 0
+		for position in self.__positions:
+			# update the stock closing value
+			position.update_value(data)
+			# update the whole portfolio value
+			self.portfolio_value += position.position_value()
 
 
-
-	def update_port(self,positison,transaction_volume,transaction_cost, delta_cash, temp,
-	                date):
-		self.__hist_log[date] = {'cash': self.__cur_cash, 'transaction fee': transaction_fee,
-		                         'balance': self.__cur_balance, 'PnL': self.__cur_PnL,
-		                         'trade volumn': transaction_volume}
-		print(type(self.__cur_position))
-		self.__hist_pos_log[date] = {'position': self.__cur_position.to_dict()}
-		# update current position
-		self.__cur_position = cur_positison
-		# update current cash
-		self.__cur_cash = self.__cur_cash + delta_cash - transaction_fee
-		# update current balance
-		last_balance = self.__cur_balance
-		self.__cur_balance = end_position_value + self.__cur_cash
-		# update PnL
-		self.__cur_PnL = self.__cur_balance - last_balance
 
 	@property
 	def cur_position(self):
