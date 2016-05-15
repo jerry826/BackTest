@@ -62,9 +62,7 @@ class broker(object):
 				                  short=self.short)
 				# validate the orders
 				order.validate(info)
-				self.port.update(order)
-				self.trade_volume += abs(100*order.valid_price*order.valid_volume*(1+self.commission))
-				self.trade_cost += abs(100*order.valid_price*order.valid_volume*self.commission)
+				self.trade_cost,self.trade_volume =self.port.update(order)
 				print(order)
 
 			# record the trade results
@@ -123,7 +121,7 @@ class broker(object):
 		:return:
 		'''
 
-		self.order_list.append(Order_num(symbol,amount))
+		self.order_list.append(Order_num(symbol,amount,self.date))
 		self.order_count += 1
 
 	def order_to(self,symbol,amount):
@@ -133,7 +131,7 @@ class broker(object):
 		:param amount: target position
 		:return: none
 		'''
-		self.order_list.append(Order_num_to(symbol, amount))
+		self.order_list.append(Order_num_to(symbol, amount, self.date))
 		self.order_count += 1
 
 	def order_pct(self,symbol,pct):
@@ -143,7 +141,7 @@ class broker(object):
 		:param pct: order size (pct of value)
 		:return: none
 		'''
-		self.order_list.append(Order_pct(symbol, pct))
+		self.order_list.append(Order_pct(symbol, pct,self.date))
 		self.order_count += 1
 
 	def order_pct_to(self,symbol,pct):
@@ -153,7 +151,7 @@ class broker(object):
 		:param pct: target pct of value
 		:return: none
 		'''
-		self.order_list.append(Order_pct_to(symbol, pct))
+		self.order_list.append(Order_pct_to(symbol,pct,self.date))
 		self.order_count += 1
 
 
@@ -231,13 +229,20 @@ class Trade_info(object):
 
 class Order(object):
 	'''
-
+	Order class
 	'''
-	def __init__(self,symbol, num):
+	def __init__(self,symbol, num, date):
+		'''
+
+		:param symbol: stock symbol
+		:param num: value for trade amount (pct or amount)
+		:param date: trade date
+		'''
 		self.amount = num
 		self.symbol = symbol
 		self.__valid_volume = 0.0
 		self.__valid_price = 0.0
+		self.__date = date
 		self.validation = False
 
 	@property
@@ -247,6 +252,10 @@ class Order(object):
 	@property
 	def valid_volume(self):
 		return self.__valid_volume
+
+	@property
+	def date(self):
+		return self.__date
 
 	def validations(self,trade_amount,info):
 		if (not info.maxupordown) and info.status == u'交易':
@@ -267,8 +276,8 @@ class Order_num(Order):
 	'''
 
 	'''
-	def __init__(self, symbol,num):
-		Order.__init__(self,symbol,num)
+	def __init__(self, symbol,num,date):
+		Order.__init__(self,symbol,num,date)
 
 	def validate(self,info):
 		trade_amount = self.amount
@@ -279,8 +288,8 @@ class Order_num_to(Order):
 	'''
 
 	'''
-	def __init__(self, symbol, num):
-		Order.__init__(self,symbol, num)
+	def __init__(self,symbol,num,date):
+		Order.__init__(self,symbol,num,date)
 
 
 	def validate(self, info):
@@ -292,8 +301,8 @@ class Order_pct(Order):
 	'''
 
 	'''
-	def __init__(self, symbol, num):
-		Order.__init__(self,symbol, num)
+	def __init__(self,symbol,num,date):
+		Order.__init__(self,symbol,num,date)
 
 
 	def validate(self, info):
@@ -306,8 +315,8 @@ class Order_pct_to(Order):
 	'''
 
 	'''
-	def __init__(self, symbol, num):
-		Order.__init__(self,symbol, num)
+	def __init__(self, symbol,num,date):
+		Order.__init__(self,symbol,num,date)
 
 	def validate(self, info):
 

@@ -6,7 +6,6 @@
 @time: 2016/5/4 22:04
 """
 from collections import defaultdict
-
 import pandas as pd
 
 class Positions(object):
@@ -17,15 +16,18 @@ class Positions(object):
 class Position(object):
 	'''
 	Position class for a single stock.
+	Recording the historical transactions, the historical positions and the current close price
 
 	'''
-	def __init__(self, symbol):
+	def __init__(self, symbol='000001.SZ'):
 		self.__symbol = symbol
 		self.amount = 0.0
 		self.last_close = 0.0
 		self.cur_close = 0.0
+		self.date = None
 		self.position_log = defaultdict(int)
 		self.close_log = defaultdict(int)
+		self.order_log = []
 
 	@property
 	def symbol(self):
@@ -35,7 +37,7 @@ class Position(object):
 	def position_value(self):
 		return self.cur_close*self.amount
 
-	def update_position(self,order,date):
+	def update_position(self,order):
 		'''
 		Update the position amount from the order
 		:param order:
@@ -43,37 +45,43 @@ class Position(object):
 		:return: none
 		'''
 		if order.validation:
-			self.amount = self.amount+order.valid_volume
-			self.position_log[date] = {'position':self.amount}
+			self.amount = self.amount+order.valid_volume # update amount
+			self.order_log.append(order) # add this order to the order list
+
 		else:
 			print('The order has not been updated')
 
-	def update_value(self,price,date):
+	def update_value(self,close,date):
 		'''
 		Update the position close price and record the price
 		:param price: current close price
 		:param date:  current date
 		:return: none
 		'''
-		self.last_close = self.cur_close
-		self.cur_close = price
-		self.close_log[date] = {'close price':self.cur_close}
+		if close != 0:
+			self.last_close = self.cur_close # record last close price
+			self.cur_close = close # update current close price
+		else:
+			self.last_close = self.cur_close
+		self.date = date # update date
+		self.close_log[date] = self.cur_close # add the position into the position log
+		self.position_log[date] = self.amount  # add the close price into the price log
 
 
 class portfolio(object):
-	def __init__(self, begin_equity=10000000,commission=0.002):
+	def __init__(self, begin_equity=10000000,commission=0.002,start_date='2011-01-01'):
 		'''
 
 		:param begin_equity: the initial equity value
 		:param commission: commission fee
 		'''
-		self.portfolio_value = begin_equity
+		self.stock_value = 0
 		self.__cash = begin_equity
-		self.__positions = defaultdict(int)
 		self.commission = commission
-		self.PnL = 0
-		self.position_log = {}
-		self.start_date = None
+		self.__positions= defaultdict(Position)
+		self.start_date = start_date
+		self.date = start_date
+		self.log = {}
 
 	@property
 	def cash(self):
@@ -83,51 +91,68 @@ class portfolio(object):
 		return self.__positions
 
 	def update(self,order):
+		'''
+		Update the position according to the order received
+		:param order: order from broker
+		:return: transaction fee and the change of cash balance
+		'''
 		if order.validation:
-			# update
-			self.__positions[order.symbol] += order.valid_volume
-			self.__cash -=  order.valid_volume*order.valid_price*(1+self.commission)*100
+			# update the order information into the  position
+			self.__positions[order.symbol].update_position(order)
+			# calculate the transaction fees
+			fee = order.valid_price*abs(order.valid_volume)*self.commission
+			trade_volume = order.valid_volume*order.valid_price*(1+self.commission)*100
+			self.__cash -=  trade_volume+fee
+			return fee, trade_volume+fee
+		else:
+			print('The order need to be validated first before execution')
+			return 0,0
 
 
-	def update_port(self,data):
+
+	def update_port(self,data,date):
 		'''
-
+		Update the daily close price for all the position and calculate the portfolio value
 		:param data: daily trading data
-		:return:
+		:return: none
 		'''
-		# set the portfolio value to zero
-		self.portfolio_value = 0
-		for position in self.__positions:
+		# update date
+		self.date = date
+		for symbol in self.__positions.keys():
 			# update the stock closing value
-			position.update_value(data)
-			# update the whole portfolio value
-			self.portfolio_value += position.position_value()
+			if symbol in data.index:
+				close = data.loc[symbol,'adj_close']
+				self.__positions[symbol].update_value(close,self.date)
+			else:
+				self.__positions[symbol].update_value(0, self.date)
 
-
+		# calculate the position value
+		self.stock_value = sum( pos.position_value for pos in list(self.__positions.values()))
+		self.log[date] = self.stock_value+self.__cash
 
 	@property
 	def cur_position(self):
-		return self.__cur_position
+		return self.__positions
 
 	@property
-	def cur_cash(self):
-		return self.__cur_cash
+	def cash(self):
+		return self.__cash
 
 	@property
-	def cur_balance(self):
-		return self.__cur_balance
+	def portfolio_value(self):
+		return self.__cash+self.stock_value
 
 	@property
 	def cur_PnL(self):
-		return self.__cur_PnL
+		return None
 
 	@property
 	def hist_log(self):
-		return self.__hist_log
+		return None
 
 	@property
 	def hist_pos_log(self):
-		return self.__hist_pos_log
+		return None
 
 
 
