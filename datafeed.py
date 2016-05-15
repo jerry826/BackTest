@@ -1,7 +1,7 @@
 # -*- encoding=utf8 -*-
 """
 @author: Jerry
-@contact: lvjy3.15@sem.tsinghua.edu.com
+@contact: lvjy3.15@sem.tsinghua.edu.cn
 @file: datafeed.py
 @time: 2016/4/30 14:37
 """

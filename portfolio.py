@@ -75,7 +75,7 @@ class portfolio(object):
 		:param begin_equity: the initial equity value
 		:param commission: commission fee
 		'''
-		self.stock_value = 0
+		self.__stock_value = 0
 		self.__cash = begin_equity
 		self.commission = commission
 		self.__positions= defaultdict(Position)
@@ -103,7 +103,7 @@ class portfolio(object):
 			fee = order.valid_price*abs(order.valid_volume)*self.commission
 			trade_volume = order.valid_volume*order.valid_price*(1+self.commission)*100
 			self.__cash -=  trade_volume+fee
-			return fee, trade_volume+fee
+			return fee, abs(trade_volume)+fee
 		else:
 			print('The order need to be validated first before execution')
 			return 0,0
@@ -125,10 +125,9 @@ class portfolio(object):
 				self.__positions[symbol].update_value(close,self.date)
 			else:
 				self.__positions[symbol].update_value(0, self.date)
-
 		# calculate the position value
-		self.stock_value = sum( pos.position_value for pos in list(self.__positions.values()))
-		self.log[date] = self.stock_value+self.__cash
+		self.__stock_value = sum( pos.position_value for pos in list(self.__positions.values()))
+		self.log[date] = self.__stock_value+self.__cash
 
 	@property
 	def cur_position(self):
@@ -140,7 +139,11 @@ class portfolio(object):
 
 	@property
 	def portfolio_value(self):
-		return self.__cash+self.stock_value
+		return self.__cash+self.__stock_value
+
+	@property
+	def stock_value(self):
+		return self.__stock_value
 
 	@property
 	def cur_PnL(self):
@@ -154,8 +157,11 @@ class portfolio(object):
 	def hist_pos_log(self):
 		return None
 
+def test():
+	port = portfolio()
+	print(port.cash)
 
 
 
 if __name__ == '__main__':
-	pass
+	test()
