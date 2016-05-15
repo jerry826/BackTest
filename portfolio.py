@@ -21,7 +21,7 @@ class Position(object):
 	'''
 	def __init__(self, symbol='000001.SZ'):
 		self.__symbol = symbol
-		self.amount = 0.0
+		self.__amount = 0.0
 		self.last_close = 0.0
 		self.cur_close = 0.0
 		self.date = None
@@ -34,8 +34,12 @@ class Position(object):
 		return self.__symbol
 
 	@property
+	def position(self):
+		return self.__amount
+
+	@property
 	def position_value(self):
-		return self.cur_close*self.amount
+		return self.cur_close*self.__amount*100
 
 	def update_position(self,order):
 		'''
@@ -45,7 +49,7 @@ class Position(object):
 		:return: none
 		'''
 		if order.validation:
-			self.amount = self.amount+order.valid_volume # update amount
+			self.__amount = self.__amount+order.valid_volume # update amount
 			self.order_log.append(order) # add this order to the order list
 
 		else:
@@ -65,7 +69,7 @@ class Position(object):
 			self.last_close = self.cur_close
 		self.date = date # update date
 		self.close_log[date] = self.cur_close # add the position into the position log
-		self.position_log[date] = self.amount  # add the close price into the price log
+		self.position_log[date] = self.__amount  # add the close price into the price log
 
 
 class portfolio(object):
@@ -101,6 +105,7 @@ class portfolio(object):
 			self.__positions[order.symbol].update_position(order)
 			# calculate the transaction fees
 			fee = order.valid_price*abs(order.valid_volume)*self.commission
+			print(fee)
 			trade_volume = order.valid_volume*order.valid_price*(1+self.commission)*100
 			self.__cash -=  trade_volume+fee
 			return fee, abs(trade_volume)+fee
@@ -128,6 +133,10 @@ class portfolio(object):
 		# calculate the position value
 		self.__stock_value = sum( pos.position_value for pos in list(self.__positions.values()))
 		self.log[date] = self.__stock_value+self.__cash
+		self.position_summary()
+
+	def position_summary(self):
+		print([x.position for x in self.__positions.values()])
 
 	@property
 	def cur_position(self):

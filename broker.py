@@ -57,7 +57,7 @@ class broker(object):
 				                  maxupordown=self.trading_data.loc[order.symbol,'maxupordown'],
 				                  status=self.trading_data.loc[order.symbol,'trade_status'],
 				                  portfolio_value=self.port.portfolio_value,
-				                  position=self.port.positions[order.symbol],
+				                  position=self.port.positions[order.symbol].position,
 				                  commission=self.commission,
 				                  short=self.short)
 				# validate the orders
@@ -82,12 +82,10 @@ class broker(object):
 		print('Date: ' +str(self.date))
 		print('Trade volume %0.1f'%self.trade_volume)
 		print('Port cash %0.1f'%self.port.cash)
-		print(self.port.positions)
-		print('========================================================')
-
 
 	def update_value(self):
-		pass
+		self.port.update_port(self.trading_data,self.date)
+		print('Update value: Portfolio value  %0.1f' % self.port.portfolio_value)
 
 	def update_info(self,date,trading_data):
 		'''
@@ -340,14 +338,17 @@ def test():
 	dd = datafeed(universe='allA')
 	dd.initialize()
 
-	for i in range(10):
+	for i in range(30):
 		date, temp = dd.data_fetch()
 		bk.update_info(date, temp)
 		x = random.random()
-		bk.order_pct('000789.SZ', 0.1)
-		bk.order_pct('601928.SH', 0.1)
-		bk.update_value()
+		print('random: %0.3f' %x)
+		bk.order_pct_to('000789.SZ', x)
 		bk.execute()
+		bk.update_value()
+
+
+
 
 
 if __name__ == '__main__':
