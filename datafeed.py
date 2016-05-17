@@ -47,7 +47,6 @@ class datafeed(object):
 		:return:
 		'''
 		print('######## Reading data ########')
-
 		if self.__universe == 'allA':
 			self.__path = self.__path + '\\mktQuotation_bar'  # set the path
 			self.__date_list = sorted([int(x[-12:-4]) for x in os.listdir(self.__path)[:-1]])  # get the date list
@@ -82,7 +81,6 @@ class datafeed(object):
 			raise ValueError("No such data type")
 		# if len(self.__data) == 0:
 		#	raise ValueError("The data required is not available")
-
 		print('Get ' + str(self.__length) + ' obersevations from ' + str(self.__day1) + ' to ' + str(self.__day2))
 		print('########     Done     ########')
 

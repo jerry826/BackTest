@@ -29,7 +29,12 @@ class BackTest(object):
 		self.__position = position
 		self.extra_position=extra_position
 		self.__universe=universe
-
+		self.__datafeed = datafeed(self.__universe, self.__begin_date, self.__end_date)
+		self.__datafeed.initialize()
+		self.__length = self.__datafeed.time_length
+		self.__strat = strat(self.__name, 'allA', 7, 2)
+		self.__broker = broker(self.__fee, 0.002)
+		self.__port = portfolio(self.begin_equity)
 
 	@property
 	def begin_date(self):
@@ -49,25 +54,26 @@ class BackTest(object):
 		self.__end_date=date
 
 	def start(self):
-		self.__datafeed = datafeed(self.__universe, self.__begin_date, self.__end_date)
-		self.__datafeed.initialize()
-		self.__length = self.__datafeed.time_length
-		self.__strat = strat(self.__name, 'allA', 7, 2)
-		self.__broker = broker(self.__fee, 0.002)
-		self.__port = portfolio(self.begin_equity)
+
 
 		for i in tqdm(range(0, self.__length)):
+			# get daily data
 			date, temp = self.__datafeed.data_fetch()
+			# add the data into broker
+			self.__broker.update_info(date, temp)
+			# get the used signals and make orders
 			signal = self.__strat.update(date, temp)
-			transaction_volumn, transaction_fee, cur_positison, end_equity_balance, delta_cash = self.__broker.order(
-				signal, self.__port.cur_position, self.__port.cur_balance, temp)
-			self.__port.update_port(cur_positison, end_equity_balance, transaction_volumn, transaction_fee, delta_cash,
-			                        temp, date)
+			self.__broker.order_pct('000789.SZ', 0.1)
+
+			# execute the orders
+			self.__broker.execute()
+			# update the portfolio value at close price
+			self.__broker.update_value()
 			print('------------------------')
 			print(date)
-			print('end value: ' + str(end_equity_balance))
-			print('fee: ' + str(transaction_fee))
-			print('delta cash: ' + str(delta_cash))
+			# print('end value: ' + str(end_equity_balance))
+			# print('fee: ' + str(transaction_fee))
+			# print('delta cash: ' + str(delta_cash))
 
 		self.__analyzer = analyzer(self.__port.hist_log)
 		self.__analyzer.cal()

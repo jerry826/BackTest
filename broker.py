@@ -33,10 +33,9 @@ class broker(object):
 		self.port = portfolio(begin_equity=1000000,commission=commission)
 		self.order_list = []
 		self.order_count = 0
-
+		# two triggers
 		self.execute_trigger = False
 		self.update_trigger = False
-
 		# daily recorder
 		self.trade_volume = 0.0
 		self.trade_cost = 0.0
@@ -51,28 +50,31 @@ class broker(object):
 		if not self.execute_trigger:
 			# execute the orders
 			for order in self.order_list:
-				info = Trade_info(cash=self.port.cash,
+				info = Trade_info(cash=self.port.cash, # cash amount
 				                  symbol=order.symbol,
-				                  price=self.trading_data.loc[order.symbol,'adj_trade'],
+				                  price=self.trading_data.loc[order.symbol,'adj_trade'],  # trade price
 				                  maxupordown=self.trading_data.loc[order.symbol,'maxupordown'],
 				                  status=self.trading_data.loc[order.symbol,'trade_status'],
 				                  portfolio_value=self.port.portfolio_value,
-				                  position=self.port.positions[order.symbol].position,
+				                  position=self.port.positions[order.symbol].position, # stock position
 				                  commission=self.commission,
 				                  short=self.short)
 				# validate the orders
 				order.validate(info)
+				# execute the order
 				self.trade_cost,self.trade_volume =self.port.update(order)
 				print(order)
 
 			# record the trade results
-			self.trade_log[self.date] = {'trade_volume':self.trade_volume, 'trade_cost': self.trade_cost, 'order num':self.order_count}
-			self.execute_index = True
+			self.trade_log[self.date] = {'trade_volume':self.trade_volume,
+										 'trade_cost': self.trade_cost,
+										 'order num':self.order_count}
+			self.execute_trigger = True
 			self.update_trigger = False
 			self.trade_summary()
 
 		else:
-			print('You cannot execute the orders twice in a single trade day or without update the data')
+			print('You cannot execute the order twice in a single trade day or without update the data')
 
 	def trade_summary(self):
 		'''
@@ -84,12 +86,16 @@ class broker(object):
 		print('Port cash %0.1f'%self.port.cash)
 
 	def update_value(self):
+		'''
+		Update the portfolio value
+		:return: none
+		'''
 		self.port.update_port(self.trading_data,self.date)
 		print('Update value: Portfolio value  %0.1f' % self.port.portfolio_value)
 
 	def update_info(self,date,trading_data):
 		'''
-		Get the new trading data and update the information
+		Get the new trading data and update the trade information
 		:param date: trading date
 		:param trading_data: trading data
 		:return: none
@@ -105,9 +111,8 @@ class broker(object):
 		self.transaction_cost = 0.0
 		self.trade_volume = 0.0
 		self.order_count = 0.0
-		self.execute_index = False
 		self.order_list = []
-
+		#
 		self.update_trigger = True # Finish data update
 		self.execute_trigger = False
 
@@ -153,7 +158,6 @@ class broker(object):
 		self.order_count += 1
 
 
-
 	def get_hist_log(self):
 		return self.trade_log
 
@@ -162,18 +166,10 @@ class broker(object):
 
 
 
-def trade_status(self, symbol):
-	'''
-	Calculate whether a stock can be traded in this day
-	:param symbol: stock symbol
-	:return: True if the stock is available for trading
-	'''
-	return (self.__trade_info[symbol]['trade_status'] == '交易' and self.__trade_info[symbol]['maxupordown'] == 0)
-
 
 class Trade_info(object):
 	'''
-
+	Trade info class.
 	'''
 	def __init__(self,cash,symbol,price,maxupordown,status,portfolio_value,position,commission=0.001,short=False):
 		self.__cash = cash
@@ -188,9 +184,22 @@ class Trade_info(object):
 
 
 	def __calculate_max(self,cash,price,commission):
+		'''
+		Calculate the largest amount of stock which can be long
+		:param cash: cash left in the account
+		:param price: stock trade price
+		:param commission: commission fee
+		:return: largest long amount
+		'''
 		return math.floor(cash/((price*(1+commission)*100)))
 
 	def __calculate_min(self,short,position):
+		'''
+		Calculate the largest amount of stock which can be short
+		:param short: whether short is allowed
+		:param position: current position
+		:return: largest short amount
+		'''
 		if not short:
 			return -position
 		else:
@@ -256,6 +265,12 @@ class Order(object):
 		return self.__date
 
 	def validations(self,trade_amount,info):
+		'''
+		Validate the order
+		:param trade_amount:
+		:param info:
+		:return:
+		'''
 		if (not info.maxupordown) and info.status == u'交易':
 			self.__valid_volume = min(max(info.min_amount, trade_amount), info.max_amount)
 		else:
