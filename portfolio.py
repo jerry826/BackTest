@@ -153,6 +153,9 @@ class portfolio(object):
 
 		return self.__positions[symbol].position_value/(self.__stock_value+self.__cash)
 
+	def get_hist_log(self):
+		return self.log
+
 	@property
 	def cur_position(self):
 		return self.__positions

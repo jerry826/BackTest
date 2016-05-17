@@ -11,17 +11,18 @@ import numpy as np
 
 
 class analyzer(object):
-	def __init__(self, hist_log):
-		self.__data = (hist_log)
+	def __init__(self, perf):
+		self.__data = pd.DataFrame(list(perf.values()),columns=['balance'],index=perf.keys())
+
 
 	def cal(self):
-		self.__data.loc[:, 'ret'] = self.__data.loc[:, 'balance'].pct_change()
+		# self.__data.loc[:, 'ret'] = self.__data.loc[:, 'balance'].pct_change()
 		self.__data.loc[:, 'ret'] = np.log(self.__data.loc[:, 'balance']/self.__data.loc[:, 'balance'].shift(1))
 		self.__data.loc[:, 'cum_ret'] = self.__data.loc[:, 'ret'].cumsum()
 
-		self.__data.loc[:, 'draw_down'] = -(
-		(self.__data.loc[:, 'cum_ret'] + 1).cummax() - (1 + self.__data.loc[:, 'cum_ret'])) / (
-		                                  1 + self.__data.loc[:, 'cum_ret'].cummax())
+		# self.__data.loc[:, 'draw_down'] = -(
+		# (self.__data.loc[:, 'cum_ret'] + 1).cummax() - (1 + self.__data.loc[:, 'cum_ret'])) / (
+		#                                  1 + self.__data.loc[:, 'cum_ret'].cummax())
 
 		self.__data.loc[:, 'draw_down'] = self.__data.loc[:, 'balance']/self.__data.loc[:, 'balance'].cummax()-1
 
@@ -43,6 +44,7 @@ class analyzer(object):
 	def plot(self):
 		self.__data.loc[:, ['cum_ret', 'draw_down']].plot()
 
+		return None
 	# self.__data.loc[:,'ret'].plot()
 
 

@@ -41,9 +41,9 @@ class broker(object):
 		self.trade_cost = 0.0
 		self.trade_log = defaultdict()
 
-	@property
-	def universe(self):
-		return list(self.trading_data[self.trading_data['maxupordown'] == 0 and self.trading_data['trade_status'] == u'交易'])
+	def get_universe(self):
+		universe = list(self.trading_data[(self.trading_data['maxupordown'] == 0) & (self.trading_data['trade_status'] == u'交易')].index)
+		return universe
 
 	def execute(self):
 		'''
@@ -163,6 +163,9 @@ class broker(object):
 	def get_hist_log(self):
 		return self.trade_log
 
+	def get_hist_perf(self):
+		return self.port.get_hist_log()
+
 	def trade_result(self):
 		return self.date, self.trade_volume, self.trade_cost
 
@@ -181,8 +184,6 @@ class broker(object):
 		:return: the stock weight
 		'''
 		return self.port.weight(symbol)
-
-
 
 
 
@@ -360,7 +361,6 @@ class Order_pct_to(Order):
 
 
 
-
 def main():
 	pass
 
@@ -381,8 +381,6 @@ def test():
 		bk.order_pct_to('000789.SZ', x)
 		bk.execute()
 		bk.update_value()
-
-
 
 
 

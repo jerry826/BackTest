@@ -11,7 +11,6 @@ from broker import *
 from portfolio import *
 from datafeed import *
 from analyzer import *
-from tqdm import tqdm
 
 class BackTest(object):
 	'''
@@ -33,8 +32,7 @@ class BackTest(object):
 		self.__datafeed.initialize()
 		self.__length = self.__datafeed.time_length
 		self.__strat = strat(self.__name, 'allA', 7, 2)
-		self.__broker = broker(self.__fee, 0.002)
-		self.__port = portfolio(self.begin_equity)
+		self.__broker = broker(self.__fee,'vwap')
 
 	@property
 	def begin_date(self):
@@ -55,15 +53,18 @@ class BackTest(object):
 
 	def start(self):
 
-
-		for i in tqdm(range(0, self.__length)):
+		for i in (range(0,30)):
 			# get daily data
 			date, temp = self.__datafeed.data_fetch()
 			# add the data into broker
 			self.__broker.update_info(date, temp)
 			# get the used signals and make orders
+			universe = self.__broker.get_universe()
+			print(universe)
 			signal = self.__strat.update(date, temp)
-			self.__broker.order_pct('000789.SZ', 0.1)
+
+			for symbol in universe[0:10]:
+				self.__broker.order_pct(symbol, 0.005)
 
 			# execute the orders
 			self.__broker.execute()
@@ -75,9 +76,12 @@ class BackTest(object):
 			# print('fee: ' + str(transaction_fee))
 			# print('delta cash: ' + str(delta_cash))
 
-		self.__analyzer = analyzer(self.__port.hist_log)
+		perf = self.__broker.get_hist_perf()
+		print(perf)
+		self.__analyzer = analyzer(perf)
 		self.__analyzer.cal()
 		self.__analyzer.plot()
+		return
 
 
 
@@ -90,5 +94,3 @@ if __name__ == '__main__':
 	bt = BackTest('mm', begin_time="2012-02-01", end_time="2013-11-01")
 	bt.start()
 
-	m = bt._BackTest__port.hist_pos_log
-	mm = pd.DataFrame.from_dict(m)
