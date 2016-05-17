@@ -48,14 +48,14 @@ class strat(object):
 		print('data length : ' + str(len(set(self._hist_data.index))))
 		# calculate the signals
 		# if the data is not enough, there is no signal
-		if len(self._date_list) < self._lag + self._length:
-			signal = dict()
-		# using gen_signal function to generate signals
-		else:
-			temp = self._hist_data[self._date_list[-self._length - self._lag]:self._date_list[-self._lag - 1]]
-			signal = self.__gen_signal(temp)
-			print('signal data length : ' + str(len(set(temp.index))))
-		return signal
+		# if len(self._date_list) < self._lag + self._length:
+		# 	signal = dict()
+		# # using gen_signal function to generate signals
+		# else:
+		# 	temp = self._hist_data[self._date_list[-self._length - self._lag]:self._date_list[-self._lag - 1]]
+		# 	signal = self.__gen_signal(temp)
+		# 	print('signal data length : ' + str(len(set(temp.index))))
+		return None
 
 	def __gen_signal(self, data):
 		signal = dict()
@@ -76,7 +76,6 @@ class strat(object):
 			close = data.groupby('sec_code')['close'].mean()
 			signal = pd.Series(np.where(close.rank(pct=True) > 0.95, 1, -1), index=close.index)
 			signal = signal.to_dict()
-
 		return signal
 
 	def MA(self,length=5,price='close'):
