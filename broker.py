@@ -8,7 +8,6 @@
 
 import math
 from collections import defaultdict
-
 import numpy as np
 import pandas as pd
 
@@ -33,6 +32,7 @@ class broker(object):
 		self.port = portfolio(begin_equity=1000000,commission=commission)
 		self.order_list = []
 		self.order_count = 0
+		self.trading_data = pd.DataFrame()
 		# two triggers
 		self.execute_trigger = False
 		self.update_trigger = False
@@ -41,6 +41,9 @@ class broker(object):
 		self.trade_cost = 0.0
 		self.trade_log = defaultdict()
 
+	@property
+	def universe(self):
+		return list(self.trading_data[self.trading_data['maxupordown'] == 0 and self.trading_data['trade_status'] == u'交易'])
 
 	def execute(self):
 		'''
@@ -157,12 +160,29 @@ class broker(object):
 		self.order_list.append(Order_pct_to(symbol,pct,self.date))
 		self.order_count += 1
 
-
 	def get_hist_log(self):
 		return self.trade_log
 
 	def trade_result(self):
 		return self.date, self.trade_volume, self.trade_cost
+
+	def get_position(self,symbol):
+		'''
+		get the position of a single stock in last trade day from portfolio
+		:param symbol: stock symbol
+		:return: the position size
+		'''
+		return self.port.get_position(symbol)
+
+	def get_weight(self,symbol):
+		'''
+		get the position of a single stock in last trade day from portfolio
+		:param symbol: stock symbol
+		:return: the stock weight
+		'''
+		return self.port.weight(symbol)
+
+
 
 
 

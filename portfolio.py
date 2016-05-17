@@ -113,8 +113,6 @@ class portfolio(object):
 			print('The order need to be validated first before execution')
 			return 0,0
 
-
-
 	def update_port(self,data,date):
 		'''
 		Update the daily close price for all the position and calculate the portfolio value
@@ -137,6 +135,23 @@ class portfolio(object):
 
 	def position_summary(self):
 		print([x.position for x in self.__positions.values()])
+
+	def get_position(self,symbol):
+		'''
+		get the position of a single stock in last trade day
+		:param symbol: stock symbol
+		:return: the position size
+		'''
+		return self.__positions[symbol].position
+
+	def get_weight(self,symbol):
+		'''
+		get the position of a single stock in last trade day
+		:param symbol: stock symbol
+		:return: the stock weight
+		'''
+
+		return self.__positions[symbol].position_value/(self.__stock_value+self.__cash)
 
 	@property
 	def cur_position(self):
