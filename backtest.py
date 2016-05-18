@@ -19,12 +19,12 @@ class BackTest(object):
 	def __init__(self, model_name, begin_time="2011-02-01", end_time="2015-11-01", begin_equity=100000000, fee=0.003,
 	             position=0.7, extra_position=0.1, path=r"C:\Users\Administrator\Desktop\alpha_output\allA",
 	             universe='allA'):
-		self.__name=model_name
-		self.__begin_date=begin_time
-		self.__end_date=end_time
-		self.path=path
-		self.begin_equity=begin_equity
-		self.__fee=fee
+		self.__name = model_name
+		self.__begin_date = begin_time
+		self.__end_date =end_time
+		self.path = path
+		self.begin_equity = begin_equity
+		self.__fee = fee
 		self.__position = position
 		self.extra_position=extra_position
 		self.__universe=universe
@@ -77,7 +77,7 @@ class BackTest(object):
 		self.__analyzer.cal()
 		self.__analyzer.plot()
 
-		report = self.__broker.get_position_report()
+		pos,close = self.__broker.get_position_report()
 
 		return
 

@@ -180,7 +180,9 @@ class broker(object):
 		return self.port.get_position(symbol)
 
 	def get_position_report(self):
-		return self.port.position_summary()
+		hist_pos = self.port.get_hist_close_log()
+		hist_close = self.port.get_hist_close_log()
+		return hist_pos,hist_close
 
 	def get_weight(self,symbol):
 		'''

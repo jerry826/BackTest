@@ -75,14 +75,14 @@ class Position(object):
 class portfolio(object):
 	def __init__(self, begin_equity=10000000,commission=0.002,start_date='2011-01-01'):
 		'''
-
+		Initializing the portfolio
 		:param begin_equity: the initial equity value
 		:param commission: commission fee
 		'''
 		self.__stock_value = 0
 		self.__cash = begin_equity
 		self.commission = commission
-		self.__positions= defaultdict(Position)
+		self.__positions = defaultdict(Position)
 		self.start_date = start_date
 		self.date = start_date
 		self.log = {}
@@ -93,6 +93,14 @@ class portfolio(object):
 	@property
 	def positions(self):
 		return self.__positions
+
+	@property
+	def portfolio_value(self):
+		return self.__cash + self.__stock_value
+
+	@property
+	def stock_value(self):
+		return self.__stock_value
 
 	def update(self,order):
 		'''
@@ -137,6 +145,7 @@ class portfolio(object):
 		print([x.symbol for x in self.__positions.values()])
 		print([x.position for x in self.__positions.values()])
 
+
 	def get_position(self,symbol):
 		'''
 		get the position of a single stock in last trade day
@@ -154,36 +163,23 @@ class portfolio(object):
 
 		return self.__positions[symbol].position_value/(self.__stock_value+self.__cash)
 
-	def get_hist_log(self):
-		return self.log
+	def get_hist_position_log(self):
+		hist_pos = {}
+		for symbol in self.__positions:
+			pos = self.__positions[symbol]
+			hist_pos[symbol] = pos.position_log
+		return hist_pos
 
-	@property
-	def cur_position(self):
-		return self.__positions
+	def get_hist_close_log(self):
+		hist_close = {}
+		for symbol in self.__positions:
+			pos = self.__positions[symbol]
+			hist_close[symbol] = pos.close_log
+		return hist_close
 
-	@property
-	def cash(self):
-		return self.__cash
 
-	@property
-	def portfolio_value(self):
-		return self.__cash+self.__stock_value
 
-	@property
-	def stock_value(self):
-		return self.__stock_value
 
-	@property
-	def cur_PnL(self):
-		return None
-
-	@property
-	def hist_log(self):
-		return None
-
-	@property
-	def hist_pos_log(self):
-		return None
 
 def test():
 	port = portfolio()
