@@ -52,24 +52,19 @@ class BackTest(object):
 		self.__end_date=date
 
 	def start(self):
-
+		# main loop
 		for i in (range(0,30)):
 			# get daily data
 			date, temp = self.__datafeed.data_fetch()
 			# add the data into broker
 			self.__broker.update_info(date, temp)
 			# get the used signals and make orders
-			universe = self.__broker.get_universe()
-			print(universe)
-			signal = self.__strat.update(date, temp)
-
-			for symbol in universe[0:10]:
-				self.__broker.order_pct(symbol, 0.005)
-
+			self.handle_data()
 			# execute the orders
 			self.__broker.execute()
 			# update the portfolio value at close price
 			self.__broker.update_value()
+			self.__strat.update(date, temp)
 			print('------------------------')
 			print(date)
 			# print('end value: ' + str(end_equity_balance))
@@ -81,9 +76,20 @@ class BackTest(object):
 		self.__analyzer = analyzer(perf)
 		self.__analyzer.cal()
 		self.__analyzer.plot()
+
+		report = self.__broker.get_position_report()
+
 		return
 
-
+	def handle_data(self):
+		'''
+		The trade strategy part
+		:return: none
+		'''
+		universe = self.__broker.get_universe()
+		print(universe)
+		for symbol in universe[0:10]:
+			self.__broker.order_pct(symbol, 0.005)
 
 
 def main():

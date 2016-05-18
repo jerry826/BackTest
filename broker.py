@@ -95,6 +95,8 @@ class broker(object):
 		'''
 		self.port.update_port(self.trading_data,self.date)
 		print('Update value: Portfolio value  %0.1f' % self.port.portfolio_value)
+		print('Update value: Cash value  %0.1f' % self.port.cash)
+		print('Update value: Stock value  %0.1f' % self.port.portfolio_value)
 
 	def update_info(self,date,trading_data):
 		'''
@@ -177,6 +179,9 @@ class broker(object):
 		'''
 		return self.port.get_position(symbol)
 
+	def get_position_report(self):
+		return self.port.position_summary()
+
 	def get_weight(self,symbol):
 		'''
 		get the position of a single stock in last trade day from portfolio
@@ -184,6 +189,8 @@ class broker(object):
 		:return: the stock weight
 		'''
 		return self.port.weight(symbol)
+
+
 
 
 

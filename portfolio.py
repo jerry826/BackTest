@@ -104,7 +104,7 @@ class portfolio(object):
 			# update the order information into the  position
 			self.__positions[order.symbol].update_position(order)
 			# calculate the transaction fees
-			fee = order.valid_price*abs(order.valid_volume)*self.commission
+			fee = order.valid_price*abs(order.valid_volume)*self.commission*100
 			print(fee)
 			trade_volume = order.valid_volume*order.valid_price*(1+self.commission)*100
 			self.__cash -=  trade_volume+fee
@@ -134,6 +134,7 @@ class portfolio(object):
 		self.position_summary()
 
 	def position_summary(self):
+		print([x.symbol for x in self.__positions.values()])
 		print([x.position for x in self.__positions.values()])
 
 	def get_position(self,symbol):
