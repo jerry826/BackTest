@@ -8,9 +8,10 @@
 import pandas as pd
 import numpy as np
 
-class strat(object):
+
+class Strat(object):
 	'''
-	strat class. Calculate some technical signal using the historical data.
+	Strat class. Calculate some technical signal using the historical data.
 	'''
 
 	def __init__(self, name='demo', universe='allA', length=5, lag=1):
@@ -28,14 +29,14 @@ class strat(object):
 		self._date_list = []
 		self._stock_list = []
 
-	def update(self, date, df):
+	def update(self, dt, df):
 		'''
 
 		:param date: date
 		:param df: trade information
 		:return:
 		'''
-		self._date_list.append(date)  # add new date
+		self._date_list.append(dt)  # add new date
 		self._hist_data = pd.concat([self._hist_data, df])  # add new data
 		# update the stock list
 		self._stock_list = list(set(self._stock_list + list(df['sec_code'])))
@@ -45,7 +46,7 @@ class strat(object):
 		else:
 			self._hist_data = self._hist_data[self._date_list[-self._lag - self._length]:self._date_list[-1]]
 
-		print('data length : ' + str(len(set(self._hist_data.index))))
+		# print('data length : ' + str(len(set(self._hist_data.index))))
 		# calculate the signals
 		# if the data is not enough, there is no signal
 		# if len(self._date_list) < self._lag + self._length:

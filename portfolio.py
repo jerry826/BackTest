@@ -72,7 +72,7 @@ class Position(object):
 		self.position_log[date] = self.__amount  # add the close price into the price log
 
 
-class portfolio(object):
+class Portfolio(object):
 	def __init__(self, begin_equity=10000000,commission=0.002,start_date='2011-01-01'):
 		'''
 		Initializing the portfolio
@@ -113,9 +113,10 @@ class portfolio(object):
 			self.__positions[order.symbol].update_position(order)
 			# calculate the transaction fees
 			fee = order.valid_price*abs(order.valid_volume)*self.commission*100
-			print(fee)
+			print('fee: %0.2f' %fee)
 			trade_volume = order.valid_volume*order.valid_price*(1+self.commission)*100
 			self.__cash -=  trade_volume+fee
+			print(self.__cash)
 			return fee, abs(trade_volume)+fee
 		else:
 			print('The order need to be validated first before execution')
@@ -139,12 +140,14 @@ class portfolio(object):
 		# calculate the position value
 		self.__stock_value = sum( pos.position_value for pos in list(self.__positions.values()))
 		self.log[date] = self.__stock_value+self.__cash
-		self.position_summary()
+		# self.position_summary()
 
 	def position_summary(self):
-		print([x.symbol for x in self.__positions.values()])
+		print([self.__positions.keys()])
 		print([x.position for x in self.__positions.values()])
 
+	def get_hist_log(self):
+		return self.log
 
 	def get_position(self,symbol):
 		'''

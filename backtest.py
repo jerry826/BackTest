@@ -8,7 +8,6 @@
 
 from strat import *
 from broker import *
-from portfolio import *
 from datafeed import *
 from analyzer import *
 
@@ -16,70 +15,69 @@ class BackTest(object):
 	'''
 	Back-test platform
 	'''
-	def __init__(self, model_name, begin_time="2011-02-01", end_time="2015-11-01", begin_equity=100000000, fee=0.003,
+	def __init__(self, model_name, begin_time="2011-02-01", end_time="2015-11-01", begin_equity=100000000000, fee=0.003,
 	             position=0.7, extra_position=0.1, path=r"C:\Users\Administrator\Desktop\alpha_output\allA",
-	             universe='allA'):
-		self.__name = model_name
-		self.__begin_date = begin_time
-		self.__end_date =end_time
+	             universe='allA',freq=5):
 		self.path = path
 		self.begin_equity = begin_equity
+		self.freq = freq
+		self.__name = model_name
+		self.__begin_date = begin_time
+		self.__end_date = end_time
 		self.__fee = fee
 		self.__position = position
-		self.extra_position=extra_position
-		self.__universe=universe
+		self.__universe = universe
 		self.__datafeed = datafeed(self.__universe, self.__begin_date, self.__end_date)
 		self.__datafeed.initialize()
 		self.__length = self.__datafeed.time_length
-		self.__strat = strat(self.__name, 'allA', 7, 2)
-		self.__broker = broker(self.__fee,'vwap')
+		self.__strat = Strat(self.__name, 'allA', 7, 2)
+		self.__broker = Broker(self.__fee,'vwap',False, begin_equity,begin_time)
+		self.__analyzer = Analyzer(date = "2011-02-01")
 
 	@property
 	def begin_date(self):
 		return self.__begin_date
+
 	@begin_date.setter
-	def begin_date(self,date):
-		if '-' not in date:
+	def begin_date(self, dt):
+		if '-' not in dt:
 			raise ValueError("Date format must be\"%Y-%m-%d\"" )
-		self.__begin_date=date
+		self.__begin_date = dt
+
 	@property
 	def end_date(self):
 		return self.__end_date
+
 	@end_date.setter
-	def end_date(self,date):
-		if '-' not in date:
+	def end_date(self, dt):
+		if '-' not in dt:
 			raise ValueError("Date format must be\"%Y-%m-%d\"" )
-		self.__end_date=date
+		self.__end_date = dt
 
 	def start(self):
 		# main loop
-		for i in (range(0,30)):
+		for i in (range(0,self.__datafeed.time_length)):
 			# get daily data
-			date, temp = self.__datafeed.data_fetch()
+			dt, trading_data = self.__datafeed.data_fetch()
 			# add the data into broker
-			self.__broker.update_info(date, temp)
+			self.__broker.update_info(dt, trading_data)
 			# get the used signals and make orders
-			self.handle_data()
+			if i%self.freq == 1:
+				self.handle_data()
 			# execute the orders
 			self.__broker.execute()
 			# update the portfolio value at close price
 			self.__broker.update_value()
-			self.__strat.update(date, temp)
+			self.__strat.update(dt, trading_data)
 			print('------------------------')
-			print(date)
-			# print('end value: ' + str(end_equity_balance))
-			# print('fee: ' + str(transaction_fee))
-			# print('delta cash: ' + str(delta_cash))
+			print(dt)
+		pos,close,nav = self.__broker.get_position_report()
 
-		perf = self.__broker.get_hist_perf()
-		print(perf)
-		self.__analyzer = analyzer(perf)
+		self.__analyzer.analysis(nav, pos, close)
 		self.__analyzer.cal()
 		self.__analyzer.plot()
-
-		pos,close = self.__broker.get_position_report()
-
-		return
+		self.__analyzer.to_csv()
+		return pos, close, nav
 
 	def handle_data(self):
 		'''
@@ -87,16 +85,15 @@ class BackTest(object):
 		:return: none
 		'''
 		universe = self.__broker.get_universe()
-		print(universe)
-		for symbol in universe[0:10]:
-			self.__broker.order_pct(symbol, 0.005)
+		for symbol in universe:
+			self.__broker.order_pct_to(symbol, 1/len(universe))
 
 
 def main():
-	bt = BackTest('test')
-	bt.start()
+	bt = BackTest('mm', begin_time="2013-02-01", end_time="2015-11-01")
+	pos, close, nav = bt.start()
 
 if __name__ == '__main__':
-	bt = BackTest('mm', begin_time="2012-02-01", end_time="2013-11-01")
-	bt.start()
+	% time main()
+
 

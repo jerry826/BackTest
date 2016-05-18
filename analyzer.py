@@ -10,21 +10,28 @@ import pandas as pd
 import numpy as np
 
 
-class analyzer(object):
-	def __init__(self, perf):
-		self.data = pd.DataFrame(list(perf.values()),columns=['balance'],index=perf.keys())
+class Analyzer(object):
+	def __init__(self, date):
+		self.date = date
+
+	def analysis(self, nav, pos, close):
+		self.data = pd.DataFrame(nav)
+		self.data.columns = ['nav']
 		self.data = self.data.sort_index()
+		self.pos = pos
+		self.close = close
 
-	def cal(self):
-		# self.__data.loc[:, 'ret'] = self.__data.loc[:, 'balance'].pct_change()
-		self.data.loc[:, 'ret'] = np.log(self.data.loc[:, 'balance']/self.data.loc[:, 'balance'].shift(1))
-		self.data.loc[:, 'cum_ret'] = self.data.loc[:, 'ret'].cumsum()
+	def cal(self, log_return = True):
+		if log_return:
 
-		# self.__data.loc[:, 'draw_down'] = -(
-		# (self.__data.loc[:, 'cum_ret'] + 1).cummax() - (1 + self.__data.loc[:, 'cum_ret'])) / (
-		#                                  1 + self.__data.loc[:, 'cum_ret'].cummax())
-
-		self.data.loc[:, 'draw_down'] = self.data.loc[:, 'balance']/self.data.loc[:, 'balance'].cummax()-1
+			self.data.loc[:, 'ret'] = np.log(self.data.loc[:, 'nav']/self.data.loc[:, 'nav'].shift(1))
+			self.data.loc[:, 'cum_ret'] = self.data.loc[:, 'ret'].cumsum()
+			self.data.loc[:, 'draw_down'] = self.data.loc[:, 'nav']/self.data.loc[:, 'nav'].cummax()-1
+		else:
+			self.data.loc[:, 'ret'] = self.data.loc[:, 'balance'].pct_change()
+			self.data.loc[:, 'draw_down'] = -(
+			(self.data.loc[:, 'cum_ret'] + 1).cummax() - (1 + self.data.loc[:, 'cum_ret'])) / (
+			                                 1 + self.data.loc[:, 'cum_ret'].cummax())
 
 		#self.__data.loc[:, 'turnover'] = self.__data.loc[:, 'trade volumn'] / self.__data.loc[:, 'balance']
 
@@ -45,6 +52,10 @@ class analyzer(object):
 	def plot(self):
 		self.data.loc[:, ['cum_ret', 'draw_down']].plot()
 
+	def to_csv(self):
+		self.pos.to_csv('pos.csv')
+		self.close.to_csv('close.csv')
+		self.data.to_csv('nav.csv')
 		return None
 	# self.__data.loc[:,'ret'].plot()
 
