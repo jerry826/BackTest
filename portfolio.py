@@ -6,7 +6,9 @@
 @time: 2016/5/4 22:04
 """
 from collections import defaultdict
+
 import pandas as pd
+
 
 class Positions(object):
 	def __init__(self):
@@ -102,7 +104,7 @@ class Portfolio(object):
 	def stock_value(self):
 		return self.__stock_value
 
-	def update(self,order):
+	def update(self, order, output=False):
 		'''
 		Update the position according to the order received
 		:param order: order from broker
@@ -113,10 +115,12 @@ class Portfolio(object):
 			self.__positions[order.symbol].update_position(order)
 			# calculate the transaction fees
 			fee = order.valid_price*abs(order.valid_volume)*self.commission*100
-			print('fee: %0.2f' %fee)
 			trade_volume = order.valid_volume*order.valid_price*(1+self.commission)*100
 			self.__cash -=  trade_volume+fee
-			print(self.__cash)
+
+			if output:
+				print('fee: %0.2f' %fee)
+				print(self.__cash)
 			return fee, abs(trade_volume)+fee
 		else:
 			print('The order need to be validated first before execution')

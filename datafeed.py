@@ -6,9 +6,10 @@
 @time: 2016/4/30 14:37
 """
 
-from datetime import *
+import datetime
 import os
 import pandas as pd
+
 
 class datafeed(object):
 	'''
@@ -28,6 +29,11 @@ class datafeed(object):
 		self.__end_date = end_date
 		self.__path = path
 		self.__count = 0
+		self.__date_list = []
+		self.__length = 0
+		self.__day1 = ''
+		self.__day2 = ''
+		self.data = pd.DataFrame()
 
 	@property
 	def time_length(self):
@@ -47,79 +53,101 @@ class datafeed(object):
 		:return:
 		'''
 		print('######## Reading data ########')
-		if self.__universe == 'allA':
-			self.__path = self.__path + '\\mktQuotation_bar'  # set the path
-			self.__date_list = sorted([int(x[-12:-4]) for x in os.listdir(self.__path)[:-1]])  # get the date list
+		if self.__universe == 'allA' or isinstance(self.__universe, list):
+			self.__path += '\\mktQuotation_bar'  # set the path
+			date_list = sorted([int(x[-12:-4]) for x in os.listdir(self.__path)[:-1]])  # get the date list
 
-			self.__date_list = [x for x in self.__date_list if
+			self.__date_list = [x for x in date_list if
 			                    x >= int(''.join(self.__begin_date.split('-'))) and x <= int(
 				                    ''.join(self.__end_date.split('-')))]
 
-
 			self.__length = len(self.__date_list)  # get the length of date list
-			self.__day1 = str(self.__date_list[0])
-			self.__day2 = str(self.__date_list[-1])
-			self.__day1 = self.__day1[0:4] + '-' + self.__day1[4:6] + '-' + self.__day1[6:8]
-			self.__day2 = self.__day2[0:4] + '-' + self.__day2[4:6] + '-' + self.__day2[6:8]
-		# begin_date = int(''.join(self.__begin_date.split('-')))
-		# end_date = int(''.join(self.__end_date.split('-')))
-		# dates = [x for x in dates if (x >= begin_date and x <= end_date)]
-		# for date in dates:
-		#	temp = pd.read_csv(path + '\\mktQuotation_bar_' + str(date) + '.csv', encoding='GBK')
-		#	temp.loc[:, 'date'] = datetime.strptime(str(date), '%Y%m%d')
-		#	self.__data = self.__data.append(temp)
-		# self.__data = self.__data.set_index('date')
+			day1 = str(self.__date_list[0])
+			day2 = str(self.__date_list[-1])
+			self.__day1 = day1[0:4] + '-' + day1[4:6] + '-' + day1[6:8]
+			self.__day2 = day2[0:4] + '-' + day2[4:6] + '-' + day2[6:8]
 
+		elif self.__universe == 'zz500':
+			xlsx = pd.ExcelFile(self.__path + '\\中证500测试数据.xlsx')
+			df = pd.read_excel(xlsx, 'Sheet1')
+			self.data = self.__data_transform(df)
+			self.data = self.data[self.__begin_date:self.__end_date]
+			print(self.__begin_date)
+			print(self.__end_date)
+			self.__date_list = self.data.index
+			self.__length = len(self.__date_list)
+			day1 = str(self.__date_list[0])
+			day2 = str(self.__date_list[-1])
 
-		# elif self.__universe == 'zz500':
-		#	xlsx = pd.ExcelFile(self.__path + '\\中证500测试数据.xlsx')
-		##	df = pd.read_excel(xlsx, 'Sheet1')
-		#	df.columns = ['date', 'time', 'open', 'high', 'low', 'close', 'volume', 'AMT']
-		#	df = df.set_index('date')
-		#	self.__data = df[self.__begin_date:self.__end_date]
 		else:
 			raise ValueError("No such data type")
-		# if len(self.__data) == 0:
-		#	raise ValueError("The data required is not available")
 		print('Get ' + str(self.__length) + ' obersevations from ' + str(self.__day1) + ' to ' + str(self.__day2))
 		print('########     Done     ########')
 
 	def data_fetch(self):
 		if self.__count == self.__length:
 			print('No more data avaiable')
-			date = self.__day2
-			temp = pd.DataFrame()
+			dt = self.__day2
+			trading_data = pd.DataFrame()
+			return dt, trading_data
 		else:
-			date = self.__date_list[self.__count]
-			temp = pd.read_csv(self.__path + '\\mktQuotation_bar_' + str(date) + '.csv', encoding='GBK')
-			temp.loc[:, 'date'] = datetime.strptime(str(date), '%Y%m%d')
-			temp = temp.set_index('date')
-			self.__count += 1
+			if self.__universe == 'allA' or isinstance(self.__universe, list):
+				dt = self.__date_list[self.__count]
+				trading_data = pd.read_csv(self.__path + '\\mktQuotation_bar_' + str(dt) + '.csv', encoding='GBK')
+				trading_data.loc[:, 'date'] = datetime.datetime.strptime(str(dt), '%Y%m%d')
+				if isinstance(self.__universe, list):
+					# select the data in the universe
+					trading_data = trading_data[[x in self.__universe for x in trading_data['sec_code']]]
+				trading_data = trading_data.set_index('date')
+				self.__count += 1
+				return datetime.datetime.strptime(str(dt), '%Y%m%d'), trading_data
 
-		return datetime.strptime(str(date), '%Y%m%d'), temp
+			elif self.__universe == 'zz500':
+				trading_data = self.data.iloc[self.__count:self.__count+1,:]
+				dt = self.__date_list[self.__count]
+				self.__count += 1
+				return dt, trading_data
+			else:
+				pass
 
 
+
+	def __data_transform(self, df):
+		df.columns = ['date', 'time', 'open', 'high', 'low', 'close', 'volume', 'AMT']
+		df['sec_code'] = 'zz500'
+		df['trade_status'] = u'交易'
+		df['maxupordown'] = 0
+		df['adjfactor'] = 1
+		df.loc[:, 't1'] = list(map(lambda t: t.strftime("%Y-%m-%d"), df['date']))
+		df.loc[:, 't2'] = list(map(lambda t: t.strftime("-%H-%M"), df['time']))
+		df.loc[:, 't'] = list(
+			map(lambda t: datetime.datetime.strptime(t, "%Y-%m-%d-%H-%M"), df.loc[:, 't1'] + df.loc[:, 't2']))
+		df = df.set_index('t')
+		return df
 
 
 
 
 
 def main():
-	dd = datafeed(universe='allA')
+	dd = datafeed(universe='zz500')
 	dd.initialize()
 	l = dd.time_length
 	for i in range(0, l + 1):
-		date, temp = dd.data_fetch()
-		print(date)
+		dt, temp = dd.data_fetch()
+		print(dt)
 	print(dd.data_fetch())
 
 
 if __name__ == '__main__':
 	from strat import *
-
-	dd = datafeed(universe='allA')
+	import datetime
+	dd = datafeed(universe='zz500',begin_date="2013-01-01",
+	              end_date="2015-11-01")
 	dd.initialize()
-	st = strat('hl', 'allA', 5)
+	st = Strat('hl', 'allA', 5)
 	for i in range(1000):
 		date, temp = dd.data_fetch()
 		signal = st.update(date, temp)
+
+

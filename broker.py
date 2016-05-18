@@ -8,16 +8,17 @@
 
 import math
 from collections import defaultdict
-import numpy as np
+
 import pandas as pd
 
-from portfolio import portfolio
+from portfolio import Portfolio
+
 
 class Broker(object):
 	'''
 	Broker class
 	'''
-	def __init__(self,commission=0.002,price_type='vwap',short=False,begin_equity=1000000,date="2015-11-01" ):
+	def __init__(self,commission=0.002,price_type='close',short=False,begin_equity=1000000,date="2015-11-01" ):
 		'''
 		Initializing the broker class
 		:param commission: commission fee, default 0.002
@@ -29,7 +30,7 @@ class Broker(object):
 		self.price = price_type
 		self.short = short
 		#
-		self.port = portfolio(begin_equity=begin_equity, commission=commission)
+		self.port = Portfolio(begin_equity=begin_equity, commission=commission)
 		self.order_list = []
 		self.order_count = 0
 		self.trading_data = pd.DataFrame()
@@ -94,10 +95,9 @@ class Broker(object):
 		'''
 		Print the trading result in a single day
 		'''
-		print('========================================================')
-		print('Date: ' +str(self.date))
-		print('Trade volume %0.1f'%self.trade_volume)
-		print('Port cash %0.1f'%self.port.cash)
+		print('=================================================================')
+		print('Date: ' + str(self.date))
+		print('Trade volume %0.1f' %self.trade_volume + ';Port cash %0.1f' % self.port.cash)
 
 	def update_value(self, output=True):
 		'''
@@ -106,9 +106,7 @@ class Broker(object):
 		'''
 		self.port.update_port(self.trading_data,self.date)
 		if output:
-			print('Update value: Portfolio value  %0.1f' % self.port.portfolio_value)
-			print('Update value: Cash value  %0.1f' % self.port.cash)
-			print('Update value: Stock value  %0.1f' % (self.port.portfolio_value - self.port.cash))
+			print('Nav %0.1f' % self.port.portfolio_value+'; Cash:  %0.1f' % self.port.cash+'; Equity: %0.1f' % (self.port.portfolio_value - self.port.cash))
 
 	def update_info(self,date,trading_data):
 		'''
@@ -212,7 +210,6 @@ class Broker(object):
 		hist_close = pd.DataFrame(self.port.get_hist_close_log())
 		nav_dict = self.port.get_hist_log()
 		hist_nav = pd.DataFrame(list(nav_dict.values()), index=nav_dict.keys())
-		print(hist_nav)
 		return hist_pos,hist_close,hist_nav
 
 	def get_weight(self,symbol):
@@ -331,7 +328,7 @@ class Order(object):
 			self.__valid_volume = min(max(info.min_amount, trade_amount), info.max_amount)
 		else:
 			self.__valid_volume = 0
-		print('valid_num: %0.2f'%self.__valid_volume)
+		# print('valid_num: %0.2f'%self.__valid_volume)
 		self.__valid_price = info.price
 		self.validation = True
 

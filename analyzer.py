@@ -13,6 +13,9 @@ import numpy as np
 class Analyzer(object):
 	def __init__(self, date):
 		self.date = date
+		self.data = pd.DataFrame()
+		self.pos = pd.DataFrame()
+		self.close = pd.DataFrame()
 
 	def analysis(self, nav, pos, close):
 		self.data = pd.DataFrame(nav)

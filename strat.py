@@ -14,7 +14,7 @@ class Strat(object):
 	Strat class. Calculate some technical signal using the historical data.
 	'''
 
-	def __init__(self, name='demo', universe='allA', length=5, lag=1):
+	def __init__(self, universe='allA', length=5, lag=1):
 		'''
 
 		:param name:
@@ -22,12 +22,12 @@ class Strat(object):
 		:param length: the time horizon need to calculate the signals
 		:param lag: time lag, default 1
 		'''
-		self._hist_data = pd.DataFrame()
-		self._length = length
-		self._name = name
-		self._lag = lag
-		self._date_list = []
-		self._stock_list = []
+		self.hist_data = pd.DataFrame()
+		self.length = length
+		self.lag = lag
+		self.date_list = []
+		self.stock_list = []
+		self.universe = universe
 
 	def update(self, dt, df):
 		'''
@@ -36,36 +36,31 @@ class Strat(object):
 		:param df: trade information
 		:return:
 		'''
-		self._date_list.append(dt)  # add new date
-		self._hist_data = pd.concat([self._hist_data, df])  # add new data
+		self.date_list.append(dt)  # add new date
+		self.hist_data = pd.concat([self.hist_data, df])  # add new data
 		# update the stock list
-		self._stock_list = list(set(self._stock_list + list(df['sec_code'])))
+		self.stock_list = list(set(self.stock_list + list(df['sec_code'])))
 		# clean the unused stock data
-		if len(self._date_list) <= self._lag + self._length:
+		if len(self.date_list) <= self.lag + self.length:
 			pass
 		else:
-			self._hist_data = self._hist_data[self._date_list[-self._lag - self._length]:self._date_list[-1]]
-
-		# print('data length : ' + str(len(set(self._hist_data.index))))
-		# calculate the signals
-		# if the data is not enough, there is no signal
-		# if len(self._date_list) < self._lag + self._length:
-		# 	signal = dict()
-		# # using gen_signal function to generate signals
-		# else:
-		# 	temp = self._hist_data[self._date_list[-self._length - self._lag]:self._date_list[-self._lag - 1]]
-		# 	signal = self.__gen_signal(temp)
-		# 	print('signal data length : ' + str(len(set(temp.index))))
+			self._hist_data = self._hist_data[self.date_list[-self.lag - self.length]:self.date_list[-1]]
 		return None
 
-	def __gen_signal(self, data):
+	def gen_signal(self,data,name):
+		'''
+		Some single signals
+		:param data:
+		:param name:
+		:return:
+		'''
 		signal = dict()
 		# demo1
-		if self._name == 'demo':
-			for stock in self._stock_list:
+		if name == 'demo':
+			for stock in self.stock_list:
 				signal[stock] = 1
 		# close price signal
-		elif self._name == 'hl':
+		elif name == 'hl':
 			data = data.fillna(1)
 			close = data.groupby('sec_code')['close'].mean()
 			signal_temp = np.where(close > 10, 1, 0) * np.where(close < 15, 1, 0) + np.where(close > 16, -1, 0)
@@ -73,11 +68,12 @@ class Strat(object):
 				if signal_temp[i] != 0:
 					signal[stock] = signal_temp[i]
 
-		elif self._name == 'mm':
+		elif name == 'mm':
 			close = data.groupby('sec_code')['close'].mean()
 			signal = pd.Series(np.where(close.rank(pct=True) > 0.95, 1, -1), index=close.index)
 			signal = signal.to_dict()
 		return signal
+
 
 	def MA(self,length=5,price='close'):
 		'''
@@ -91,8 +87,11 @@ class Strat(object):
 	def MACD(self,length=5):
 		pass
 
-	def history(self,length=5,type='ohlc'):
+	def history(self,length=5,type='ohlc',universe=[]):
+
+		date_list = self._date_list[-5:-1]
 		pass
+
 
 
 
@@ -106,10 +105,10 @@ class Strat(object):
 def main():
 	dd = datafeed(universe='allA')
 	dd.initialize()
-	st = strat('hl', 'allA', 8, 2)
+	st = Strat('hl', 'allA', 8, 2)
 	for i in range(10):
 		date, temp = dd.data_fetch()
-		signal = strat.update(date, temp)
+		signal = Strat.update(date, temp)
 	# print(signal)
 
 
