@@ -145,7 +145,7 @@ if __name__ == '__main__':
 	from strat import *
 	import datetime
 	dd = datafeed(universe='zz500',begin_date="2013-01-01",
-	              end_date="2015-11-01")
+	              end_date="2014-11-01")
 	dd.initialize()
 	st = Strat('hl', 'allA', 5)
 	for i in range(1000):

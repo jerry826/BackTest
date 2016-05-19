@@ -39,28 +39,29 @@ class Broker(object):
 		self.execute_trigger = False
 		self.update_trigger = False
 		# daily recorder
-		self.trade_volume = 0.0
+		self.trade_amount = 0.0
 		self.trade_cost = 0.0
-		self.transaction_cost = 0.0
-		self.trade_log = defaultdict()
 		self.date = date
+		# log
+		self.trade_log = {}
 
 	def get_universe(self):
 		'''
 		Get the list of stock symbol
-		:return: none
+		:return: list of stocks which can be traded
 		'''
 		universe = list(self.trading_data[(self.trading_data['maxupordown'] == 0) & (self.trading_data['trade_status'] == u'交易')].index)
 		return universe
 
-	def execute(self):
+	def execute(self,output=False):
 		'''
 		Execute the orders separately
 		:return: none
 		'''
 		if not self.execute_trigger:
 			# execute the orders
-
+			fee = 0
+			trade_amount = 0
 			for order in self.order_list:
 				info = Trade_info(cash=self.port.cash, # cash amount
 				                  symbol=order.symbol,
@@ -74,13 +75,18 @@ class Broker(object):
 				# validate the orders
 				order.validate(info)
 				# execute the order
-				cost, volume =self.port.update(order)
-				# print(order)
-				self.trade_cost += cost
-				self.trade_volume += volume
+				fee, trade_amount, delta_cash = self.port.update(order)
+				if output:
+					print(fee)
+					print(trade_amount)
+					print(delta_cash)
+					print(order)
+				# update the daily record
+				self.trade_amount += trade_amount
+				self.trade_cost += fee
 
 			# record the trade results
-			self.trade_log[self.date] = {'trade_volume':self.trade_volume,
+			self.trade_log[self.date] = {'trade_volume': self.trade_amount,
 										 'trade_cost': self.trade_cost,
 										 'order num':self.order_count}
 			self.execute_trigger = True
@@ -97,14 +103,14 @@ class Broker(object):
 		'''
 		print('=================================================================')
 		print('Date: ' + str(self.date))
-		print('Trade volume %0.1f' %self.trade_volume + ';Port cash %0.1f' % self.port.cash)
+		print('Trade volume %0.1f' % self.trade_amount + ';Port cash %0.1f' % self.port.cash)
 
 	def update_value(self, output=True):
 		'''
 		Update the portfolio value
 		:return: none
 		'''
-		self.port.update_port(self.trading_data,self.date)
+		self.port.update_port(self.trading_data, self.date)
 		if output:
 			print('Nav %0.1f' % self.port.portfolio_value+'; Cash:  %0.1f' % self.port.cash+'; Equity: %0.1f' % (self.port.portfolio_value - self.port.cash))
 
@@ -123,8 +129,8 @@ class Broker(object):
 		self.date = date
 
 		# reset the daily trading variable
-		self.transaction_cost = 0.0
-		self.trade_volume = 0.0
+		self.trade_cost = 0.0
+		self.trade_amount = 0.0
 		self.order_count = 0.0
 		self.order_list = []
 		#
@@ -219,7 +225,7 @@ class Broker(object):
 		Rerurn the trading result
 		:return:
 		'''
-		return self.date, self.trade_volume, self.trade_cost
+		return self.date, self.trade_amount, self.trade_cost
 
 	def get_position(self, symbol):
 		'''
@@ -236,9 +242,12 @@ class Broker(object):
 		'''
 		hist_pos = pd.DataFrame(self.port.get_hist_position_log()).fillna(0)
 		hist_close = pd.DataFrame(self.port.get_hist_close_log())
-		nav_dict = self.port.get_hist_log()
+		nav_dict = self.port.get_nav_log()
 		hist_nav = pd.DataFrame(list(nav_dict.values()), index=nav_dict.keys())
-		return hist_pos,hist_close,hist_nav
+		cash_dict = self.port.get_cash_log()
+		hist_cash = pd.DataFrame(list(cash_dict.values()), index=cash_dict.keys())
+		hist_trade = pd.DataFrame(self.trade_log).T
+		return hist_pos,hist_close,hist_nav,hist_cash,hist_trade
 
 	def get_weight(self,symbol):
 		'''
@@ -246,7 +255,7 @@ class Broker(object):
 		:param symbol: stock symbol
 		:return: the stock weight
 		'''
-		return self.port.weight(symbol)
+		return self.port.get_weight(symbol)
 
 
 class Trade_info(object):
@@ -262,7 +271,7 @@ class Trade_info(object):
 		self.__position = position
 		self.__portfolio_value = portfolio_value
 		self.max_amount = self.__calculate_max(cash,price,commission)
-		self.min_amount = self.__calculate_min(short,position)
+		self.min_amount = self.__calculate_min(short,position,cash,price,commission)
 
 	def __calculate_max(self, cash, price, commission):
 		'''
@@ -274,7 +283,7 @@ class Trade_info(object):
 		'''
 		return math.floor(cash/(price*(1+commission)*100))
 
-	def __calculate_min(self, short, position):
+	def __calculate_min(self, short, position,cash,price,commission):
 		'''
 		Calculate the largest amount of stock which can be short
 		:param short: whether short is allowed
@@ -284,7 +293,7 @@ class Trade_info(object):
 		if not short:
 			return -position
 		else:
-			return -float("inf")
+			return -self.__calculate_max(cash, price, commission)
 
 	@property
 	def symbol(self):

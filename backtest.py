@@ -18,25 +18,27 @@ class BackTest(object):
 	'''
 	def __init__(self, model_name='demo', begin_time="2011-02-01", end_time="2015-11-01", begin_equity=100000000000, fee=0.003,
 	             path=r"C:\Users\Administrator\Desktop\allA",
-	             universe='allA',freq=5,length=5, lag=1):
+	             universe='allA',freq=5,length=5, lag=1, short=False,price_type='close'):
 		self.path = path
 		self.begin_equity = begin_equity
 		self.freq = freq
-		self.__name = model_name
+		self.name = model_name
 		self.__begin_date = begin_time
 		self.__end_date = end_time
-		self.__fee = fee
-		self.__universe = universe
-		self.datafeed = datafeed(universe = self.__universe,
+		self.fee = fee
+		self.lag = lag
+		self.universe = universe
+		self.datafeed = datafeed(universe = self.universe,
 		                           begin_date = self.__begin_date,
 		                           end_date = self.__end_date,
 		                           path=path)
 		self.datafeed.initialize()
-		self.__length = self.datafeed.time_length
-		self.strat = Strat(self.__name, 'allA', length, lag)
-		self.broker = Broker(self.__fee,'close',False, begin_equity,begin_time)
+		self.length = length
+		self.strat = Strat(universe, length, lag)
+		self.broker = Broker(self.fee,price_type,short, begin_equity,begin_time)
 		self.analyzer = Analyzer(date = begin_time)
 		self.risk = Risk(date = begin_time)
+
 
 	@property
 	def begin_date(self):
@@ -60,31 +62,35 @@ class BackTest(object):
 
 	def start(self):
 		# main loop
-		for date_id in (range(0,self.datafeed.time_length)):
+		for date_id in range(0,self.lag+self.length):
+			dt, trading_data = self.datafeed.data_fetch()
+			self.strat.update(dt, trading_data)
+		for date_id in (range(self.lag+self.length,self.datafeed.time_length)):
 			# get daily data
 			dt, trading_data = self.datafeed.data_fetch()
 			# add the data into broker
 			self.broker.update_info(dt, trading_data)
+			self.strat.update(dt, trading_data)
 			# get the used signals and make orders
-			if date_id%self.freq == 1:
+			if date_id%self.freq == 1 and date_id > (self.length+self.lag):
 				self.handle_data()
 			# execute the orders
-			self.broker.execute()
+			self.broker.execute(output=False)
 			# update the portfolio value at close price
 			self.broker.update_value()
-			self.strat.update(dt, trading_data)
 
-		pos, close, nav = self.broker.get_position_report()
+
+		pos, close, nav, cash, trade = self.broker.get_position_report()
 
 		# perf analysis
-		self.analyzer.analysis(nav, pos, close)
-		self.analyzer.cal()
+		self.analyzer.analysis(nav, pos, close, cash, trade)
+		summary = self.analyzer.cal()
 		self.analyzer.plot()
 		self.analyzer.to_csv()
 
 		# risk analysis
-		self.risk.analysis(nav)
-		return pos, close, nav
+		self.risk.analysis(summary)
+		return pos, close, nav, trade
 
 
 
@@ -94,14 +100,13 @@ class BackTest(object):
 		:return: none
 		'''
 		universe = self.broker.get_universe()
-		for symbol in universe:
-
-			self.broker.order_pct_to(symbol, 1/len(universe))
-
+		#for symbol in universe:
+		#	self.broker.order_pct(symbol, 0.001)
+		self.broker.order_pct_to('000001.SZ', -0.5)
 
 def main():
-	bt = BackTest('mm', begin_time="2013-02-01", end_time="2015-11-01",path='E:\\data',universe = ['000018.SZ', '000019.SZ'])
-	pos, close, nav = bt.start()
+	bt = BackTest('mm', begin_time="2013-04-01", end_time="2013-11-01",path='E:\\data',universe = ['000001.SZ', '000019.SZ'],short=True)
+	pos, close, nav , trade = bt.start()
 
 if __name__ == '__main__':
 	main()

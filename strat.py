@@ -82,9 +82,9 @@ class Strat(object):
 		:param price:
 		:return:
 		'''
-		data_temp = self.__select_data(time_start=-length-self.lag, time_end=-1-self.lag, data_type='c')
-
-		return data_temp.groupby('sec_code').mean()
+		data_temp = self.__select_data(time_start=-length-self.lag, time_end=-self.lag, data_type='ca')
+		data_temp.loc[:,'close'] = data_temp.loc[:,'close']*data_temp.loc[:,'adjfactor']
+		return data_temp.groupby('sec_code')['close'].mean()
 
 
 	def MACD(self,length=5):
@@ -95,7 +95,7 @@ class Strat(object):
 		'''
 		pass
 
-	def history(self,length=5,data_type='ohlc',universe=[]):
+	def history(self,length=5,data_type='ohlca',universe=[]):
 		'''
 		History data
 		:param length: time length
@@ -104,12 +104,11 @@ class Strat(object):
 		:return:
 		'''
 
-		x = self.__select_data(time_start=-length-self.lag,time_end=-1-self.lag,data_type=data_type)
-		print(x.columns)
+		x = self.__select_data(time_start=-length-self.lag,time_end=-self.lag,data_type=data_type)
 		return x
 
 
-	def __select_data(self,time_start=0,time_end=1,data_type='ohlc'):
+	def __select_data(self,time_start=0,time_end=1,data_type='ohlca'):
 		'''
 		Data selecting function
 		:param time_start: 1,2,...,end
@@ -124,8 +123,8 @@ class Strat(object):
 				  'a':'adjfactor',
 				  'v':'AMT'}
 
-		date_list = self.date_list[-time_start:-time_end]
-		return self.hist_data[ [x in date_list for x in self.hist_data.index ]][[config[i] for i in data_type]]
+		date_list = self.date_list[time_start:time_end]
+		return self.hist_data[ [x in date_list for x in self.hist_data.index ]][[config[i] for i in data_type]+['sec_code']]
 
 
 

@@ -17,12 +17,20 @@ class Analyzer(object):
 		self.pos = pd.DataFrame()
 		self.close = pd.DataFrame()
 
-	def analysis(self, nav, pos, close):
+		self.cash = pd.DataFrame()
+		self.trade = pd.DataFrame()
+
+	def analysis(self, nav, pos, close, cash, trade):
 		self.data = pd.DataFrame(nav)
 		self.data.columns = ['nav']
 		self.data = self.data.sort_index()
+
 		self.pos = pos
 		self.close = close
+
+		self.data[trade.columns] = trade
+		self.data['cash'] = cash
+
 
 	def cal(self, log_return = True):
 		if log_return:
@@ -36,7 +44,7 @@ class Analyzer(object):
 			(self.data.loc[:, 'cum_ret'] + 1).cummax() - (1 + self.data.loc[:, 'cum_ret'])) / (
 			                                 1 + self.data.loc[:, 'cum_ret'].cummax())
 
-		#self.__data.loc[:, 'turnover'] = self.__data.loc[:, 'trade volumn'] / self.__data.loc[:, 'balance']
+		self.data.loc[:, 'turnover'] = self.data.loc[:, 'trade_volume'] / self.data.loc[:, 'nav']
 
 		# calculate the peerformance index
 		sharpe_ratio = np.sqrt(52) * (self.data.loc[:, 'ret']).mean() / (self.data.loc[:, 'ret']).std()
@@ -53,12 +61,21 @@ class Analyzer(object):
 		return self.data
 
 	def plot(self):
+		'''
+		ploting
+		:return:
+		'''
 		self.data.loc[:, ['cum_ret', 'draw_down']].plot()
+		return None
 
 	def to_csv(self):
-		self.pos.to_csv('pos.csv')
-		self.close.to_csv('close.csv')
-		self.data.to_csv('nav.csv')
+		'''
+		Save the result
+		:return:
+		'''
+		self.pos.to_csv('position_report.csv')
+		self.close.to_csv('close_report.csv')
+		self.data.to_csv('performance_report.csv')
 		return None
 	# self.__data.loc[:,'ret'].plot()
 
@@ -68,6 +85,6 @@ if __name__ == '__main__':
 	# data = az.cal()
 	# az.plot()
 	data = pd.read_csv('balance.csv')
-	az = analyzer(data)
+	az = Analyzer(data)
 	data = az.cal()
 	az.plot()

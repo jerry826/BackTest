@@ -24,17 +24,16 @@ class Strategy(BackTest):
 		:return: none
 		'''
 		portfolio_value = self.broker.portfolio_value()  # account value
-		cash = self.broker.cash()  # cash available
+		cash = self.broker.get_cash()  # cash available
 		universe = self.broker.get_universe()  # stock can be traded
 
 		MA5 = self.strat.MA(5,'close')  # get MA5
 		MA10 = self.strat.MA(10,'close') # get MA10
-		weight = self.broker.get_weight(universe[0])  # get last position weight
-		pos = self.broker.get_position(universe[0])  # get last position
+		# weight = self.broker.get_weight(universe[0])  # get last position weight
+		# pos = self.broker.get_position(universe[0])  # get last position
 
-		buy_list = []
+		buy_list = universe[1:50]
 		hold_list = [stock for stock in buy_list if stock in universe]
-
 		# sell first
 		for stock in universe:
 			if stock not in hold_list:
@@ -45,23 +44,23 @@ class Strategy(BackTest):
 		d = len(hold_list)
 		for stock in hold_list:
 			weight = self.broker.get_weight(stock)
-			change[stock] = d-weight
+			change[stock] = 1/d-weight
 		# make the orders
 		for stock in sorted(change, key=change.get):
-			self.broker.order_to(stock, change[stock])
+			self.broker.order_pct_to(stock, change[stock])
 
 def main():
 	bt = Strategy(model_name='mm',
 	              begin_time="2013-01-01",
-	              end_time="2015-11-01",
+	              end_time="2013-05-01",
 	              path='E:\\data',
-	              universe = 'zz500',
+	              universe = 'allA',
 	              begin_equity=  100000000,
 	              fee = 0.002,
 	              freq =5,
 				  length=10,
 				  lag=1)
-	pos, close, nav = bt.start()
+	pos, close, nav ,cash= bt.start()
 
 if __name__ == '__main__':
 	main()

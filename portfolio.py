@@ -30,7 +30,6 @@ class Position(object):
 		self.position_log = defaultdict(int)
 		self.close_log = defaultdict(int)
 		self.order_log = []
-		self.short = False
 		self.avg_cost = 0
 
 
@@ -44,7 +43,15 @@ class Position(object):
 
 	@property
 	def position_value(self):
-		return abs(self.cur_close*self.__amount*100)
+		'''
+		Return the position value
+		:return:
+		'''
+		# print(self.symbol)
+		# print('avg %0.2f'%self.avg_cost)
+		# print('amount %0.2f' %self.__amount)
+		# print('cur close: %0.2f' %self.cur_close)
+		return abs(self.avg_cost*self.__amount*100)+self.__amount*(self.cur_close-self.avg_cost)*100
 
 	def update_position(self,order):
 		'''
@@ -54,10 +61,14 @@ class Position(object):
 		:return: none
 		'''
 		if order.validation:
-			self.__amount = self.__amount+order.valid_volume # update amount
-			self.order_log.append(order) # add this order to the order list
-			self.avg_cost = (self.avg_cost*self.__amount + order.valid_volume*order.valid_price)/(self.__amount+order.valid_volume)
 
+			if self.__amount+order.valid_volume!=0:
+				self.avg_cost = (self.avg_cost*self.__amount + order.valid_volume*order.valid_price)/(self.__amount+order.valid_volume)
+
+			else:
+				self.avg_cost = 0
+			self.__amount = self.__amount + order.valid_volume  # update amount
+			self.order_log.append(order)  # add this order to the order list
 		else:
 			print('The order has not been updated')
 
@@ -91,7 +102,8 @@ class Portfolio(object):
 		self.__positions = defaultdict(Position)
 		self.start_date = start_date
 		self.date = start_date
-		self.log = {}
+		self.nav_log = {}
+		self.cash_log = {}
 
 	@property
 	def cash(self):
@@ -108,27 +120,36 @@ class Portfolio(object):
 	def stock_value(self):
 		return self.__stock_value
 
-	def update(self, order, output=False):
+	def update(self, order,output=False):
 		'''
 		Update the position according to the order received
 		:param order: order from broker
+		:param output: whether print the update result
 		:return: transaction fee and the change of cash balance
 		'''
 		if order.validation:
-			# update the order information into the  position
+			# update the order information into the position class
+			pos_old = self.__positions[order.symbol].position
+			pos_new = pos_old+order.valid_volume
 			self.__positions[order.symbol].update_position(order)
+
 			# calculate the transaction fees(if the order is short type, the valid_volume is negative)
 			fee = abs(order.valid_price*abs(order.valid_volume)*self.commission*100)
-			trade_volume = (order.valid_volume*order.valid_price*(1+self.commission)*100)
-			self.__cash -=  trade_volume+fee
+
+			# calculate the trade amount
+			trade_amount = abs(order.valid_price*abs(order.valid_volume)*(1+self.commission)*100)
+			# calculate the delta cash
+			delta_cash = (abs(pos_new)-abs(pos_old))*order.valid_price*100 + fee
+
+			self.__cash -= delta_cash
 
 			if output:
-				print('fee: %0.2f' %fee)
-				print(self.__cash)
-			return fee, abs(trade_volume)+fee
+				print('fee: %0.2f' % fee)
+				print('cash available: %0.2f'%self.__cash)
+			return fee, trade_amount, delta_cash
 		else:
 			print('The order need to be validated first before execution')
-			return 0,0
+			return 0, 0, 0
 
 	def update_port(self,data,date):
 		'''
@@ -142,20 +163,41 @@ class Portfolio(object):
 			# update the stock closing value
 			if symbol in data.index:
 				close = data.loc[symbol,'adj_close']
+				print(close)
 				self.__positions[symbol].update_value(close,self.date)
 			else:
 				self.__positions[symbol].update_value(0, self.date)
 		# calculate the position value
+		# print(list(pos.position_value for pos in list(self.__positions.values())))
+
+
 		self.__stock_value = sum( pos.position_value for pos in list(self.__positions.values()))
-		self.log[date] = self.__stock_value+self.__cash
+		self.nav_log[date] = self.__stock_value+self.__cash
+		self.cash_log[date] = self.__cash
 		# self.position_summary()
 
 	def position_summary(self):
+		'''
+		Print the position summary
+		:return: None
+		'''
 		print([self.__positions.keys()])
 		print([x.position for x in self.__positions.values()])
 
-	def get_hist_log(self):
-		return self.log
+	def get_nav_log(self):
+		'''
+		Return the historical nav data
+		:return: the nav log
+		'''
+		return self.nav_log
+
+	def get_cash_log(self):
+		'''
+		Return the historical cash data
+		:return: the cash log
+		'''
+		return self.cash_log
+
 
 	def get_position(self,symbol):
 		'''
@@ -171,7 +213,6 @@ class Portfolio(object):
 		:param symbol: stock symbol
 		:return: the stock weight
 		'''
-
 		return self.__positions[symbol].position_value/(self.__stock_value+self.__cash)
 
 	def get_hist_position_log(self):
