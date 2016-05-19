@@ -18,7 +18,7 @@ class BackTest(object):
 	'''
 	def __init__(self, model_name='demo', begin_time="2011-02-01", end_time="2015-11-01", begin_equity=100000000000, fee=0.003,
 	             path=r"C:\Users\Administrator\Desktop\allA",
-	             universe='allA',freq=5):
+	             universe='allA',freq=5,length=5, lag=1):
 		self.path = path
 		self.begin_equity = begin_equity
 		self.freq = freq
@@ -33,7 +33,7 @@ class BackTest(object):
 		                           path=path)
 		self.datafeed.initialize()
 		self.__length = self.datafeed.time_length
-		self.strat = Strat(self.__name, 'allA', 7, 2)
+		self.strat = Strat(self.__name, 'allA', length, lag)
 		self.broker = Broker(self.__fee,'close',False, begin_equity,begin_time)
 		self.analyzer = Analyzer(date = begin_time)
 		self.risk = Risk(date = begin_time)

@@ -172,6 +172,34 @@ class Broker(object):
 		self.order_list.append(OrderPctTo(symbol, pct, self.date))
 		self.order_count += 1
 
+	def order_short(self, symbol, num):
+		'''
+		SHory order
+		:param symbol: stock symbol
+		:param num:
+		:return:
+		'''
+
+		self.order_list.append(OrderShort(symbol, num, self.date))
+		self.order_count += 1
+
+
+
+	def portfolio_value(self):
+		'''
+
+		:return: portfolio value
+		'''
+		return self.port.portfolio_value
+
+	def get_cash(self):
+		'''
+
+		:return: cash avaiable in the account
+		'''
+		return self.port.cash
+
+
 	def get_hist_log(self):
 		'''
 		Return the dict of historical orders
@@ -329,6 +357,7 @@ class Order(object):
 		else:
 			self.__valid_volume = 0
 		# print('valid_num: %0.2f'%self.__valid_volume)
+
 		self.__valid_price = info.price
 		self.validation = True
 
@@ -388,6 +417,19 @@ class OrderPctTo(Order):
 
 		self.validations(trade_amount, info)
 
+class OrderShort(Order):
+	'''
+	Short order (will be integrated into the normal order in the future)
+	'''
+
+	def __init__(self, symbol, num, date):
+		Order.__init__(self, symbol, num, date)
+
+
+	def validate(self, info):
+		trade_amount = self.amount
+
+		self.validations(trade_amount, info)
 
 def main():
 	pass

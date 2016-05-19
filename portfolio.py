@@ -30,6 +30,9 @@ class Position(object):
 		self.position_log = defaultdict(int)
 		self.close_log = defaultdict(int)
 		self.order_log = []
+		self.short = False
+		self.avg_cost = 0
+
 
 	@property
 	def symbol(self):
@@ -41,7 +44,7 @@ class Position(object):
 
 	@property
 	def position_value(self):
-		return self.cur_close*self.__amount*100
+		return abs(self.cur_close*self.__amount*100)
 
 	def update_position(self,order):
 		'''
@@ -53,6 +56,7 @@ class Position(object):
 		if order.validation:
 			self.__amount = self.__amount+order.valid_volume # update amount
 			self.order_log.append(order) # add this order to the order list
+			self.avg_cost = (self.avg_cost*self.__amount + order.valid_volume*order.valid_price)/(self.__amount+order.valid_volume)
 
 		else:
 			print('The order has not been updated')
@@ -113,9 +117,9 @@ class Portfolio(object):
 		if order.validation:
 			# update the order information into the  position
 			self.__positions[order.symbol].update_position(order)
-			# calculate the transaction fees
-			fee = order.valid_price*abs(order.valid_volume)*self.commission*100
-			trade_volume = order.valid_volume*order.valid_price*(1+self.commission)*100
+			# calculate the transaction fees(if the order is short type, the valid_volume is negative)
+			fee = abs(order.valid_price*abs(order.valid_volume)*self.commission*100)
+			trade_volume = (order.valid_volume*order.valid_price*(1+self.commission)*100)
 			self.__cash -=  trade_volume+fee
 
 			if output:
