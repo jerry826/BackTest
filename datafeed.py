@@ -53,6 +53,8 @@ class datafeed(object):
 		:return:
 		'''
 		print('######## Reading data ########')
+		print(self.__universe)
+
 		if self.__universe == 'allA' or isinstance(self.__universe, list):
 			self.__path += '\\mktQuotation_bar'  # set the path
 			date_list = sorted([int(x[-12:-4]) for x in os.listdir(self.__path)[:-1]])  # get the date list

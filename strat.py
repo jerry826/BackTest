@@ -44,7 +44,7 @@ class Strat(object):
 		if len(self.date_list) <= self.lag + self.length:
 			pass
 		else:
-			self._hist_data = self._hist_data[self.date_list[-self.lag - self.length]:self.date_list[-1]]
+			self.hist_data = self.hist_data[self.date_list[-self.lag - self.length]:self.date_list[-1]]
 		return None
 
 	def gen_signal(self,data,name):
@@ -63,11 +63,11 @@ class Strat(object):
 		elif name == 'hl':
 			data = data.fillna(1)
 			close = data.groupby('sec_code')['close'].mean()
-			signal_temp = np.where(close > 10, 1, 0) * np.where(close < 15, 1, 0) + np.where(close > 16, -1, 0)
-			for i, stock in enumerate(close.index):
+			signal_temp = np.where(close > 10, 1, 0)*np.where(close < 15, 1, 0) + np.where(close > 16, -1, 0)
+			for idx, stock in enumerate(close.index):
 				if signal_temp[i] != 0:
-					signal[stock] = signal_temp[i]
-
+					signal[stock] = signal_temp[idx]
+		#
 		elif name == 'mm':
 			close = data.groupby('sec_code')['close'].mean()
 			signal = pd.Series(np.where(close.rank(pct=True) > 0.95, 1, -1), index=close.index)
@@ -84,13 +84,29 @@ class Strat(object):
 		'''
 		pass
 
+
 	def MACD(self,length=5):
+		'''
+		MACD
+		:param length: time length
+		:return:
+		'''
 		pass
 
 	def history(self,length=5,type='ohlc',universe=[]):
+		'''
+		History
+		:param length: time length
+		:param type: 'ohlc
+		:param universe:
+		:return:
+		'''
 
-		date_list = self._date_list[-5:-1]
-		pass
+		date_list = self.date_list[-5:-1]
+		l = ['sec_code', 'pre_close', 'open', 'high', 'low', 'close']
+		x = self.hist_data[ [x in date_list  for x in     self.hist_data.index ]][l]
+		print(x.columns)
+		return x
 
 
 
@@ -116,7 +132,11 @@ if __name__ == '__main__':
 	from datafeed import *
 	dd = datafeed(universe='allA')
 	dd.initialize()
-	st = strat('demo', 'allA', 50, 3)
-	for i in range(1000):
+	st = Strat('allA', 50, 3)
+	for i in range(dd.time_length):
 		date, temp = dd.data_fetch()
-		signal = st.update(date, temp)
+		print(date)
+		print(len(temp))
+		st.update(date, temp)
+		print(st.history())
+
