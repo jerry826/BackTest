@@ -9,7 +9,8 @@ Quantitative trade back-test platform
 1. 可参考demo.py
 2. 继承BackTest类
 3. 在handle_data中实现策略并完成回测，主要可以从broker中获得历史持仓信息，从strat中获得指标、信号等信息，并通过broker下单
-主要初始化参数
+
+主要初始化参数：
 * model_name：自定义模型名称
 * begin_time：回测起始时间，格式 "2011-02-01"
 * end_time：回测结束时间，格式 "2011-02-01"
