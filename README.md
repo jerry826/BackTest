@@ -3,6 +3,27 @@ Quantitative trade back-test platform
 
 # 回测框架
 
+## 回测模块：BackTest
+回测框架
+
+1. 可参考demo.py
+2. 继承BackTest类
+3. 在handle_data中实现策略并完成回测，主要可以从broker中获得历史持仓信息，从strat中获得指标、信号等信息，并通过broker下单
+主要初始化参数
+* model_name：自定义模型名称
+* begin_time：回测起始时间，格式 "2011-02-01"
+* end_time：回测结束时间，格式 "2011-02-01"
+* path：数据所在路径
+* universe：股票池，支持'allA'，'zz500'，和自定义股票列表
+* freq：策略刷新时间，默认为5
+* length：所需历史时间长度（越短系统占用资源越少）
+* lag：信息滞后期，默认为1，即交易日只能使用交易日前一天以及之前的股价信息
+* short：是否允许做空，默认为False
+* price_type：交易结算价，默认为'close'，可选'vwap','open'等
+* output：是否输出中间结果，默认为False
+
+
+
 ## 数据模块：datafeed
 ### datafeed类，作为回测引擎
 负责数据读取，清理，转换
