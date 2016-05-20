@@ -18,7 +18,7 @@ class Broker(object):
 	'''
 	Broker class
 	'''
-	def __init__(self,commission=0.002,price_type='close',short=False,begin_equity=1000000,date="2015-11-01" ):
+	def __init__(self,commission=0.002,price_type='close',short=False,begin_equity=1000000,date="2015-11-01",output=True ):
 		'''
 		Initializing the broker class
 		:param commission: commission fee, default 0.002
@@ -29,6 +29,7 @@ class Broker(object):
 		self.commission = commission
 		self.price = price_type
 		self.short = short
+		self.output = output
 		#
 		self.port = Portfolio(begin_equity=begin_equity, commission=commission)
 		self.order_list = []
@@ -91,7 +92,9 @@ class Broker(object):
 										 'order num':self.order_count}
 			self.execute_trigger = True
 			self.update_trigger = False
-			self.trade_summary()
+
+			if output:
+				self.trade_summary()
 
 		else:
 			# warning
@@ -105,7 +108,7 @@ class Broker(object):
 		print('Date: ' + str(self.date))
 		print('Trade volume %0.1f' % self.trade_amount + ';Port cash %0.1f' % self.port.cash)
 
-	def update_value(self, output=True):
+	def update_value(self, output=False):
 		'''
 		Update the portfolio value
 		:return: none
@@ -188,7 +191,6 @@ class Broker(object):
 
 		self.order_list.append(OrderShort(symbol, num, self.date))
 		self.order_count += 1
-
 
 
 	def portfolio_value(self):

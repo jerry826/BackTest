@@ -8,9 +8,6 @@
 
 from backtest import BackTest
 
-def func():
-	pass
-
 
 class Strategy(BackTest):
 	def __init__(self,model_name, begin_time, end_time, begin_equity, fee,
@@ -32,7 +29,7 @@ class Strategy(BackTest):
 		# weight = self.broker.get_weight(universe[0])  # get last position weight
 		# pos = self.broker.get_position(universe[0])  # get last position
 
-		buy_list = universe[1:50]
+		buy_list = universe[0:50]
 		hold_list = [stock for stock in buy_list if stock in universe]
 		# sell first
 		for stock in universe:
@@ -60,7 +57,7 @@ def main():
 	              freq =5,
 				  length=10,
 				  lag=1)
-	pos, close, nav ,cash= bt.start()
+	perf, risk = bt.start()
 
 if __name__ == '__main__':
 	main()

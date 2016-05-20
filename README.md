@@ -9,8 +9,9 @@ Quantitative trade back-test platform
 
 1. 读取股票日度交易csv文件或者股指高频数据（支持universe='allA' 'zz500' 股票列表三种选择，不可更改）
 2. 记录当前时间t
-3. 返回数据库中的所有时间点
-4. 返回当前一期观测值ohlcv，并更新当前时间t+1，以防使用未来数据
+API:
+datafeed.data_fetch(返回一天的交易数据并自动更新内部时间)
+
 
 ## 策略模块：strat
 ### strat类
@@ -18,8 +19,15 @@ Quantitative trade back-test platform
 
 1. 从datafeed中获取数据，管理时间序列数据流，**捕获新值释放旧值**（指标计算跨度n和延时l）。
 2. 输入策略逻辑，计算指标数值
-3. 根据指标，给出交易指令信号
-4. 信号signals，取值为(id,1,0,-1)，分别表示buy,hold,sell
+3. 
+
+API:
+strat.update(dt,df) 更新来自datafeed的数据
+strat.gen_signal(data,name) 生成一些个性化信号
+strat.MA(length,price) length期移动平均，price可以是close，open，high，low（复权价）
+strat.MACD() MACD线
+strat.history(length,data_type,universe) 批量返回历史数据，长度为length，universe为代码列表，data_type默认'ohlca'
+
 
 ## 交易模块：broker
 ### broker类
@@ -31,6 +39,20 @@ Quantitative trade back-test platform
 4. 根据前一日的持仓和交易信号计算当前持仓
 5. 计算成交金额
 6. 计算手续费金额
+
+API：
+broker.get_universe() 返回当前交易日的可交易股票列表
+broker.order(symbol, amount) 买入（卖出）数量为amount的股票symbol
+broker.order_to(symbol, amount) 买入（卖出）一定量的股票使得股票symbol交易后的数量为amount
+broker.order_pct(symbol, amount)买入（卖出）价值为当前总价值的pct部分的证券symbol
+broker.order_pct_to(symbol, amount)买入（卖出）证券symbol使得其价值为虚拟账户当前总价值的pct部分
+broker.portfolio_value() 返回当前账户总价值
+broker.get_cash() 返回当前账户现价余额
+broker.get_hist_log() 返回历史订单列表
+broker.get_position(symbol) 返回某只股票的当前仓位
+broker.get_weight(symbol) 返回某只股票的当前所占仓位比例
+broker.get_hist_perf() 返回账户历史净值列表
+broker.get_position_report() 返回历史净值列表
 
 ## 组合模块：portfolio
 ### port类
@@ -45,17 +67,18 @@ Quantitative trade back-test platform
 ### analyzer类
 负责分析策略表现，提供净值曲线，年化收益率，年化波动率，最大回撤等指标的计算和输出
 
-1. 计算评价指标
+1. 计算评价指标，包括夏普值，年化平均收益率，最大回撤，年化历史波动率
 2. 图形展示
-3. 制作回测报告
+3. 输出回测报告，包括仓位表，收盘价表，历史表现评价表
 
 ## 风控模块：risk
 ### risk类
 根据实时数据返回当前情况下的账户风险指标，包括资金使用情况、剩余资金量、杠杆率、VaR这些信息。
 
 1. 获取来自port的持仓信息
-2. 计算资金使用情况，杠杆率，剩余资金
-3. 计算日度VaR
+2. 计算资金使用情况，杠杆率，剩余资金，盈亏比
+3. 计算日度VaR(0.999)
+4. 输出风险评价表
 
 
 

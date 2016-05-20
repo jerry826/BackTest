@@ -53,7 +53,6 @@ class datafeed(object):
 		:return:
 		'''
 		print('######## Reading data ########')
-		print(self.__universe)
 
 		if self.__universe == 'allA' or isinstance(self.__universe, list):
 			self.__path += '\\mktQuotation_bar'  # set the path
@@ -83,7 +82,7 @@ class datafeed(object):
 
 		else:
 			raise ValueError("No such data type")
-		print('Get ' + str(self.__length) + ' obersevations from ' + str(self.__day1) + ' to ' + str(self.__day2))
+		print('Get ' + str(self.__length) + ' obersevations from ' + str(day1) + ' to ' + str(day2))
 		print('########     Done     ########')
 
 	def data_fetch(self):
@@ -111,8 +110,6 @@ class datafeed(object):
 				return dt, trading_data
 			else:
 				pass
-
-
 
 	def __data_transform(self, df):
 		df.columns = ['date', 'time', 'open', 'high', 'low', 'close', 'volume', 'AMT']

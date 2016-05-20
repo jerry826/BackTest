@@ -18,7 +18,7 @@ class BackTest(object):
 	'''
 	def __init__(self, model_name='demo', begin_time="2011-02-01", end_time="2015-11-01", begin_equity=100000000000, fee=0.003,
 	             path=r"C:\Users\Administrator\Desktop\allA",
-	             universe='allA',freq=5,length=5, lag=1, short=False,price_type='close'):
+	             universe='allA',freq=5,length=5, lag=1,short=False,price_type='close',output=False):
 		self.path = path
 		self.begin_equity = begin_equity
 		self.freq = freq
@@ -35,9 +35,10 @@ class BackTest(object):
 		self.datafeed.initialize()
 		self.length = length
 		self.strat = Strat(universe, length, lag)
-		self.broker = Broker(self.fee,price_type,short, begin_equity,begin_time)
+		self.broker = Broker(self.fee,price_type,short, begin_equity,begin_time,output)
 		self.analyzer = Analyzer(date = begin_time)
 		self.risk = Risk(date = begin_time)
+		self.output = output
 
 
 	@property
@@ -75,22 +76,25 @@ class BackTest(object):
 			if date_id%self.freq == 1 and date_id > (self.length+self.lag):
 				self.handle_data()
 			# execute the orders
-			self.broker.execute(output=False)
+			self.broker.execute(output=self.output)
 			# update the portfolio value at close price
-			self.broker.update_value()
-
+			self.broker.update_value(output=self.output)
 
 		pos, close, nav, cash, trade = self.broker.get_position_report()
 
 		# perf analysis
-		self.analyzer.analysis(nav, pos, close, cash, trade)
-		summary = self.analyzer.cal()
+		if self.universe == 'zz500':
+			freq = 'min'
+		else:
+			freq = 'd'
+		self.analyzer.analysis(nav, pos, close, cash, trade, freq)
+		performance_summary = self.analyzer.cal()
 		self.analyzer.plot()
 		self.analyzer.to_csv()
 
 		# risk analysis
-		self.risk.analysis(summary)
-		return pos, close, nav, trade
+		risk_summary = self.risk.analysis(performance_summary,freq)
+		return performance_summary, risk_summary
 
 
 
@@ -105,10 +109,11 @@ class BackTest(object):
 		self.broker.order_pct_to('000001.SZ', -0.5)
 
 def main():
-	bt = BackTest('mm', begin_time="2013-04-01", end_time="2013-11-01",path='E:\\data',universe = ['000001.SZ', '000019.SZ'],short=True)
-	pos, close, nav , trade = bt.start()
+	bt = BackTest('mm', begin_time="2012-04-01", end_time="2013-11-01",path='E:\\data',universe = ['000001.SZ', '000019.SZ'],short=True)
+	summary = bt.start()
+	return summary
 
 if __name__ == '__main__':
-	main()
+	x = main()
 
 
