@@ -10,7 +10,7 @@ Quantitative trade back-test platform
 1. 读取股票日度交易csv文件或者股指高频数据（支持universe='allA' 'zz500' 股票列表三种选择，不可更改）
 2. 记录当前时间t
 API:
-datafeed.data_fetch(返回一天的交易数据并自动更新内部时间)
+* datafeed.data_fetch(返回一天的交易数据并自动更新内部时间)
 
 
 ## 策略模块：strat
@@ -22,11 +22,11 @@ datafeed.data_fetch(返回一天的交易数据并自动更新内部时间)
 3. 
 
 API:
-strat.update(dt,df) 更新来自datafeed的数据
-strat.gen_signal(data,name) 生成一些个性化信号
-strat.MA(length,price) length期移动平均，price可以是close，open，high，low（复权价）
-strat.MACD() MACD线
-strat.history(length,data_type,universe) 批量返回历史数据，长度为length，universe为代码列表，data_type默认'ohlca'
+* strat.update(dt,df) 更新来自datafeed的数据
+* strat.gen_signal(data,name) 生成一些个性化信号
+* strat.MA(length,price) length期移动平均，price可以是close，open，high，low（复权价）
+* strat.MACD() MACD线
+* strat.history(length,data_type,universe) 批量返回历史数据，长度为length，universe为代码列表，data_type默认'ohlca'
 
 
 ## 交易模块：broker
@@ -41,18 +41,18 @@ strat.history(length,data_type,universe) 批量返回历史数据，长度为len
 6. 计算手续费金额
 
 API：
-broker.get_universe() 返回当前交易日的可交易股票列表
-broker.order(symbol, amount) 买入（卖出）数量为amount的股票symbol
-broker.order_to(symbol, amount) 买入（卖出）一定量的股票使得股票symbol交易后的数量为amount
-broker.order_pct(symbol, amount)买入（卖出）价值为当前总价值的pct部分的证券symbol
-broker.order_pct_to(symbol, amount)买入（卖出）证券symbol使得其价值为虚拟账户当前总价值的pct部分
-broker.portfolio_value() 返回当前账户总价值
-broker.get_cash() 返回当前账户现价余额
-broker.get_hist_log() 返回历史订单列表
-broker.get_position(symbol) 返回某只股票的当前仓位
-broker.get_weight(symbol) 返回某只股票的当前所占仓位比例
-broker.get_hist_perf() 返回账户历史净值列表
-broker.get_position_report() 返回历史净值列表
+* broker.get_universe() 返回当前交易日的可交易股票列表
+* broker.order(symbol, amount) 买入（卖出）数量为amount的股票symbol
+* broker.order_to(symbol, amount) 买入（卖出）一定量的股票使得股票symbol交易后的数量为amount
+* broker.order_pct(symbol, amount)买入（卖出）价值为当前总价值的pct部分的证券symbol
+* broker.order_pct_to(symbol, amount)买入（卖出）证券symbol使得其价值为虚拟账户当前总价值的pct部分
+* broker.portfolio_value() 返回当前账户总价值
+* broker.get_cash() 返回当前账户现价余额
+* broker.get_hist_log() 返回历史订单列表
+* broker.get_position(symbol) 返回某只股票的当前仓位
+* broker.get_weight(symbol) 返回某只股票的当前所占仓位比例
+* broker.get_hist_perf() 返回账户历史净值列表
+* broker.get_position_report() 返回历史净值列表
 
 ## 组合模块：portfolio
 ### port类
