@@ -81,7 +81,11 @@ class Analyzer(object):
 		:return:
 		'''
 		plt.figure(1)
-		plt.plot(self.data.loc[:, ['cum_ret', 'draw_down']])
+		if  self.freq == 'd':
+			plt.plot(self.data.loc[:, ['cum_ret', 'draw_down']])
+		else:
+			plt.plot(self.data.loc[:, ['cum_ret', 'draw_down']].values)
+
 		plt.title('Return result and draw down')
 		monthly_perf = self.data['nav'].resample('m').last().ffill()
 		if len(monthly_perf)>6:
