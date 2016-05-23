@@ -12,9 +12,9 @@ from backtest import BackTest
 
 class Strategy(BackTest):
 	def __init__(self,model_name, begin_time, end_time, begin_equity, fee,
-	             path, universe,freq,length, lag,short, price_type):
+	             path, universe,freq,length, lag,short):
 		BackTest.__init__(self,model_name, begin_time, end_time, begin_equity, fee,
-	             path, universe,freq,length, lag,short, price_type)
+	             path, universe,freq,length, lag,short)
 
 	def handle_data(self):
 		'''
@@ -29,17 +29,17 @@ class Strategy(BackTest):
 		# 	self.broker.order_pct_to('zz500',0.8)
 		# else:
 		# 	self.broker.order_pct_to('zz500',0)
-		self.broker.order_pct_to('zz500',1)
+		self.broker.order_pct_to('zz500',0.5)
 
 def main():
 	bt = Strategy(model_name='mm',
-	              begin_time="2013-01-01",
-	              end_time="2013-03-01",
+	              begin_time="2012-12-20",
+	              end_time="2013-01-10",
 	              path='E:\\data',
 	              universe = 'zz500',
 	              begin_equity=  100000000,
 	              fee = 0.002,
-	              freq =2,
+	              freq =20,
 				  length=10,
 				  lag=1,
 	              short=True)
