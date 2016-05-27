@@ -6,5 +6,7 @@
 *.pyc
 *.csv
 *.ipynb
+*.xml
+*.gitignore
 dist
 build
